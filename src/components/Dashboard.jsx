@@ -17,6 +17,7 @@ export default function Dashboard({ session }) {
   const [newCatAge, setNewCatAge] = useState('adult')
   const [error, setError] = useState(null)
   const [addLoading, setAddLoading] = useState(false)
+  const [generatingName, setGeneratingName] = useState(false)
 
   // Prediction state
   const [predictions, setPredictions] = useState([])
@@ -112,6 +113,31 @@ export default function Dashboard({ session }) {
   }, [selectedCat?.id, fetchPredictions, fetchAchievements, fetchHealthLogs])
 
   // --- Handlers ---
+
+  const handleGenerateName = async () => {
+    setGeneratingName(true)
+    try {
+      const prompt = `Generate a single dramatic cat name for a cat with world domination ambitions.
+Age category: ${newCatAge}
+Rules:
+- kitten: cute but ambitious titles like Admiral, Baron, Captain
+- adult: commanding titles like Commander, General, Lord
+- senior: ancient emperor titles like Emperor, Grand Overlord, Ancient Lord
+Format: [Title] [Name] like Admiral Fluffington or Lord Shadowpaw.
+One name only. No explanation. No punctuation at the end.`
+
+      const { data, error: fnError } = await supabase.functions.invoke("gemini-proxy", {
+        body: { prompt },
+      })
+      if (fnError) throw fnError
+      const name = (data?.narration || '').trim().slice(0, 30)
+      if (name) setNewCatName(name)
+    } catch {
+      // Silently fail — user can still type manually
+    } finally {
+      setGeneratingName(false)
+    }
+  }
 
   const handleAddCat = async (e) => {
     e.preventDefault()
@@ -335,16 +361,26 @@ export default function Dashboard({ session }) {
                 <label htmlFor="cat-name" className="text-xs font-black uppercase tracking-widest block mb-1">
                   Cat Name
                 </label>
-                <input
-                  id="cat-name"
-                  type="text"
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="e.g. Lord Whiskers"
-                  required
-                  maxLength={30}
-                  className="w-full border-2 border-near-black p-2 text-sm font-body"
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="cat-name"
+                    type="text"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="e.g. Lord Whiskers"
+                    required
+                    maxLength={30}
+                    className="flex-1 border-2 border-near-black p-2 text-sm font-body"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGenerateName}
+                    disabled={generatingName}
+                    className="bg-[#00CFFF] text-[#1A1A2E] font-black border-2 border-[#1A1A2E] rounded-xl px-3 py-2 text-sm hover:opacity-80 transition-opacity disabled:opacity-50"
+                  >
+                    {generatingName ? '...' : '✨ Generate'}
+                  </button>
+                </div>
               </div>
 
               <div>
