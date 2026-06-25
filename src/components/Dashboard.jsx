@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import CatProfileCard from './CatProfileCard'
+import PredictionForm from './PredictionForm'
+import ResultCard from './ResultCard'
+import PredictionHistory from './PredictionHistory'
+import AchievementGallery from './AchievementGallery'
 
 export default function Dashboard({ session }) {
   const [cats, setCats] = useState([])
@@ -10,9 +15,26 @@ export default function Dashboard({ session }) {
   const [error, setError] = useState(null)
   const [addLoading, setAddLoading] = useState(false)
 
+  // Prediction state
+  const [predictions, setPredictions] = useState([])
+  const [latestResult, setLatestResult] = useState(null)
+
+  // Achievements
+  const [unlockedIds, setUnlockedIds] = useState([])
+
+  // Toast
+  const [toast, setToast] = useState(null)
+
   useEffect(() => {
     fetchCats()
   }, [])
+
+  useEffect(() => {
+    if (selectedCat) {
+      fetchPredictions()
+      fetchAchievements()
+    }
+  }, [selectedCat?.id])
 
   const fetchCats = async () => {
     try {
@@ -26,6 +48,33 @@ export default function Dashboard({ session }) {
       if (data?.length > 0 && !selectedCat) setSelectedCat(data[0])
     } catch (err) {
       console.error('Failed to fetch cats:', err.message)
+    }
+  }
+
+  const fetchPredictions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chaos_predictions')
+        .select('*')
+        .eq('cat_id', selectedCat.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setPredictions(data || [])
+    } catch (err) {
+      console.error('Failed to fetch predictions:', err.message)
+    }
+  }
+
+  const fetchAchievements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cat_achievements')
+        .select('achievement_id')
+        .eq('cat_id', selectedCat.id)
+      if (error) throw error
+      setUnlockedIds((data || []).map(a => a.achievement_id))
+    } catch (err) {
+      console.error('Failed to fetch achievements:', err.message)
     }
   }
 
@@ -77,12 +126,84 @@ export default function Dashboard({ session }) {
     }
   }
 
+  const handlePrediction = (result) => {
+    setLatestResult(result)
+    setPredictions(prev => [result, ...prev])
+    // Update cat XP locally
+    setSelectedCat(prev => ({ ...prev, total_xp: result.newTotalXP }))
+    setCats(prev => prev.map(c => c.id === selectedCat.id ? { ...c, total_xp: result.newTotalXP } : c))
+  }
+
+  const handleConfirm = (predictionId, accurate) => {
+    setPredictions(prev => prev.map(p =>
+      p.id === predictionId ? { ...p, confirmed_accurate: accurate } : p
+    ))
+    if (accurate) {
+      const newXP = (selectedCat.total_xp || 0) + 25
+      setSelectedCat(prev => ({ ...prev, total_xp: newXP }))
+      setCats(prev => prev.map(c => c.id === selectedCat.id ? { ...c, total_xp: newXP } : c))
+    }
+    // Update latest result if it matches
+    if (latestResult?.id === predictionId) {
+      setLatestResult(prev => ({ ...prev, confirmed_accurate: accurate }))
+    }
+  }
+
+  const handleDeletePrediction = (id) => {
+    setPredictions(prev => prev.filter(p => p.id !== id))
+    if (latestResult?.id === id) setLatestResult(null)
+  }
+
+  const handleAchievementUnlock = (achievement) => {
+    setUnlockedIds(prev => [...prev, achievement.id])
+    showToast(achievement)
+  }
+
+  const showToast = (achievement) => {
+    setToast(achievement)
+    setTimeout(() => setToast(null), 4000)
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
   }
 
+  // Feeding reminder
+  const getFeedingReminder = () => {
+    if (predictions.length === 0) return null
+    const latest = predictions[0]
+    if (!latest.input_data?.lastMealHour && latest.input_data?.lastMealHour !== 0) return null
+    const hoursSince = (new Date().getHours() - latest.input_data.lastMealHour + 24) % 24
+    if (hoursSince >= 6) {
+      return `${hoursSince} hours since ${selectedCat.name} last ate. Chaos risk is rising.`
+    }
+    return null
+  }
+
+  const feedingReminder = selectedCat ? getFeedingReminder() : null
+
   return (
     <div className="min-h-screen bg-off-white">
+      {/* Achievement Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 border-2 border-near-black bg-electric-yellow p-4 shadow-[4px_4px_0px_#1A1A2E] max-w-xs animate-pulse">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{toast.emoji}</span>
+            <div>
+              <p className="font-heading font-black text-sm uppercase tracking-widest text-near-black">
+                Achievement Unlocked!
+              </p>
+              <p className="text-xs font-bold text-near-black mt-1">
+                {toast.title}
+              </p>
+              <p className="text-[10px] font-mono text-neutral-600 mt-0.5">
+                {toast.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b-2 border-near-black bg-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -202,19 +323,45 @@ export default function Dashboard({ session }) {
           )}
         </section>
 
-        {/* Selected cat content area */}
+        {/* Selected cat content */}
         {selectedCat && (
           <section className="space-y-8">
-            <div className="border-2 border-near-black p-4 bg-white shadow-[4px_4px_0px_#1A1A2E]">
-              <p className="font-heading font-black text-lg uppercase tracking-widest">
-                {selectedCat.name}
-              </p>
-              <p className="text-sm text-neutral-500 font-mono mt-1">
-                {selectedCat.age_category} · XP: {selectedCat.total_xp || 0}
-              </p>
-            </div>
+            {/* Profile Card */}
+            <CatProfileCard cat={selectedCat} predictions={predictions} />
 
-            {/* TODO: CatProfileCard, PredictionForm, ResultCard, PredictionHistory, AchievementGallery, ConspiracyReport, HealthLog, VetReport */}
+            {/* Feeding Reminder */}
+            {feedingReminder && (
+              <div className="bg-electric-yellow border-2 border-near-black p-3 font-bold text-sm shadow-[3px_3px_0px_#1A1A2E]">
+                🍽️ {feedingReminder}
+              </div>
+            )}
+
+            {/* Prediction Form */}
+            <PredictionForm
+              cat={selectedCat}
+              predictions={predictions}
+              unlockedIds={unlockedIds}
+              onPrediction={handlePrediction}
+              onAchievementUnlock={handleAchievementUnlock}
+            />
+
+            {/* Latest Result */}
+            {latestResult && (
+              <ResultCard
+                result={latestResult}
+                cat={selectedCat}
+                onConfirm={handleConfirm}
+              />
+            )}
+
+            {/* Prediction History */}
+            <PredictionHistory
+              predictions={predictions}
+              onDelete={handleDeletePrediction}
+            />
+
+            {/* Achievement Gallery */}
+            <AchievementGallery unlockedIds={unlockedIds} />
           </section>
         )}
       </main>
