@@ -7,6 +7,7 @@ import PredictionHistory from './PredictionHistory'
 import AchievementGallery from './AchievementGallery'
 import HealthLog from './HealthLog'
 import VetReport from './VetReport'
+import ConspiracyReport from './ConspiracyReport'
 
 export default function Dashboard({ session }) {
   const [cats, setCats] = useState([])
@@ -178,6 +179,13 @@ export default function Dashboard({ session }) {
   const handleAchievementUnlock = (achievement) => {
     setUnlockedIds(prev => [...prev, achievement.id])
     showToast(achievement)
+  }
+
+  const handleConspiracyAchievement = (achievementId) => {
+    if (!unlockedIds.includes(achievementId)) {
+      setUnlockedIds(prev => [...prev, achievementId])
+      showToast({ id: achievementId, title: "Intelligence Breach", emoji: "🕵️", description: "Generated your first Cat Conspiracy Report" })
+    }
   }
 
   const showToast = (achievement) => {
@@ -379,6 +387,14 @@ export default function Dashboard({ session }) {
             <PredictionHistory
               predictions={predictions}
               onDelete={handleDeletePrediction}
+            />
+
+            {/* Conspiracy Report */}
+            <ConspiracyReport
+              cat={selectedCat}
+              predictions={predictions}
+              unlockedIds={unlockedIds}
+              onAchievementUnlock={handleConspiracyAchievement}
             />
 
             {/* Achievement Gallery */}
