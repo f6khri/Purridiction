@@ -9,6 +9,8 @@ import HealthLog from './HealthLog'
 import VetReport from './VetReport'
 import ConspiracyReport from './ConspiracyReport'
 
+const CAT_COLORS = ['#FF3366', '#00CFFF', '#FFD700', '#00FF88', '#FF6B00', '#3D3480']
+
 export default function Dashboard({ session }) {
   const [cats, setCats] = useState([])
   const [selectedCat, setSelectedCat] = useState(null)
@@ -19,20 +21,11 @@ export default function Dashboard({ session }) {
   const [addLoading, setAddLoading] = useState(false)
   const [generatingName, setGeneratingName] = useState(false)
 
-  // Prediction state
   const [predictions, setPredictions] = useState([])
   const [latestResult, setLatestResult] = useState(null)
-
-  // Achievements
   const [unlockedIds, setUnlockedIds] = useState([])
-
-  // Health logs
   const [healthLogs, setHealthLogs] = useState([])
-
-  // Toast queue
   const [toast, setToast] = useState(null)
-
-  // --- Data fetching functions ---
 
   const fetchCats = useCallback(async () => {
     try {
@@ -93,8 +86,6 @@ export default function Dashboard({ session }) {
     }
   }, [])
 
-  // --- Effects ---
-
   useEffect(() => {
     fetchCats()
   }, [fetchCats])
@@ -111,8 +102,6 @@ export default function Dashboard({ session }) {
     }
     setLatestResult(null)
   }, [selectedCat?.id, fetchPredictions, fetchAchievements, fetchHealthLogs])
-
-  // --- Handlers ---
 
   const handleGenerateName = async () => {
     setGeneratingName(true)
@@ -133,7 +122,7 @@ One name only. No explanation. No punctuation at the end.`
       const name = (data?.narration || '').trim().slice(0, 30)
       if (name) setNewCatName(name)
     } catch {
-      // Silently fail — user can still type manually
+      // Silently fail
     } finally {
       setGeneratingName(false)
     }
@@ -142,39 +131,20 @@ One name only. No explanation. No punctuation at the end.`
   const handleAddCat = async (e) => {
     e.preventDefault()
     setError(null)
-
     const trimmedName = newCatName.trim()
-    if (!trimmedName) {
-      setError('Cat name is required.')
-      return
-    }
-    if (trimmedName.length > 30) {
-      setError('Cat name must be 30 characters or less.')
-      return
-    }
-    if (!['kitten', 'adult', 'senior'].includes(newCatAge)) {
-      setError('Invalid age category.')
-      return
-    }
+    if (!trimmedName) { setError('Cat name is required.'); return }
+    if (trimmedName.length > 30) { setError('Cat name must be 30 characters or less.'); return }
+    if (!['kitten', 'adult', 'senior'].includes(newCatAge)) { setError('Invalid age category.'); return }
 
     setAddLoading(true)
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       if (!currentSession) return
-
       const { data, error: insertError } = await supabase
         .from('cats')
-        .insert([{
-          user_id: currentSession.user.id,
-          name: trimmedName,
-          age_category: newCatAge,
-          total_xp: 0,
-        }])
-        .select()
-        .single()
-
+        .insert([{ user_id: currentSession.user.id, name: trimmedName, age_category: newCatAge, total_xp: 0 }])
+        .select().single()
       if (insertError) throw insertError
-
       setCats(prev => [...prev, data])
       setSelectedCat(data)
       setNewCatName('')
@@ -187,11 +157,7 @@ One name only. No explanation. No punctuation at the end.`
     }
   }
 
-  const handleSelectCat = (cat) => {
-    if (cat.id !== selectedCat?.id) {
-      setSelectedCat(cat)
-    }
-  }
+  const handleSelectCat = (cat) => { if (cat.id !== selectedCat?.id) setSelectedCat(cat) }
 
   const handlePrediction = (result) => {
     setLatestResult(result)
@@ -201,17 +167,13 @@ One name only. No explanation. No punctuation at the end.`
   }
 
   const handleConfirm = (predictionId, accurate) => {
-    setPredictions(prev => prev.map(p =>
-      p.id === predictionId ? { ...p, confirmed_accurate: accurate } : p
-    ))
+    setPredictions(prev => prev.map(p => p.id === predictionId ? { ...p, confirmed_accurate: accurate } : p))
     if (accurate) {
       const newXP = (selectedCat.total_xp || 0) + 25
       setSelectedCat(prev => ({ ...prev, total_xp: newXP }))
       setCats(prev => prev.map(c => c.id === selectedCat.id ? { ...c, total_xp: newXP } : c))
     }
-    if (latestResult?.id === predictionId) {
-      setLatestResult(prev => ({ ...prev, confirmed_accurate: accurate }))
-    }
+    if (latestResult?.id === predictionId) setLatestResult(prev => ({ ...prev, confirmed_accurate: accurate }))
   }
 
   const handleDeletePrediction = (id) => {
@@ -232,108 +194,96 @@ One name only. No explanation. No punctuation at the end.`
   const handleConspiracyAchievement = (achievementId) => {
     if (!unlockedIds.includes(achievementId)) {
       setUnlockedIds(prev => [...prev, achievementId])
-      showAchievementToast({
-        id: achievementId,
-        title: "Intelligence Breach",
-        emoji: "🕵️",
-        description: "Generated your first Cat Conspiracy Report",
-      })
+      showAchievementToast({ id: achievementId, title: "Intelligence Breach", emoji: "🕵️", description: "Generated your first Cat Conspiracy Report" })
     }
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-  }
+  const handleLogout = async () => { await supabase.auth.signOut() }
 
-  // Feeding reminder: show if 6+ hours since last meal
   const getFeedingReminder = () => {
     if (predictions.length === 0) return null
     const latest = predictions[0]
     if (!latest.input_data?.lastMealHour && latest.input_data?.lastMealHour !== 0) return null
     const hoursSince = (new Date().getHours() - latest.input_data.lastMealHour + 24) % 24
-    if (hoursSince >= 6) {
-      return `${hoursSince} hours since ${selectedCat.name} last ate. Chaos risk is rising.`
-    }
+    if (hoursSince >= 6) return `${hoursSince} hours since ${selectedCat.name} last ate. Chaos risk is rising.`
     return null
   }
 
   const feedingReminder = selectedCat ? getFeedingReminder() : null
 
   return (
-    <div className="min-h-screen bg-off-white">
-      {/* Achievement Toast — fixed top-right, auto-dismiss 4s */}
+    <div className="min-h-screen bg-[#FFFBF0]">
+      {/* Achievement Toast */}
       {toast && (
         <div
-          className="fixed top-4 right-4 z-50 border-2 border-near-black bg-electric-yellow p-4 shadow-[4px_4px_0px_#1A1A2E] max-w-xs"
+          className="fixed top-4 right-4 z-50 border-4 border-[#1A1A2E] bg-[#FFD700] p-4 shadow-[6px_6px_0px_#FF3366] max-w-xs rotate-[2deg]"
           role="status"
           aria-live="polite"
         >
           <div className="flex items-center gap-3">
-            <span className="text-3xl" aria-hidden="true">{toast.emoji}</span>
+            <span className="text-4xl" aria-hidden="true">{toast.emoji}</span>
             <div>
-              <p className="font-heading font-black text-sm uppercase tracking-widest text-near-black">
+              <p className="font-impact text-sm uppercase text-[#1A1A2E]">
                 Achievement Unlocked!
               </p>
-              <p className="text-xs font-bold text-near-black mt-1">
-                {toast.title}
-              </p>
-              <p className="text-[10px] font-mono text-neutral-600 mt-0.5">
-                {toast.description}
-              </p>
+              <p className="text-xs font-black text-[#1A1A2E] mt-1">{toast.title}</p>
+              <p className="text-[10px] font-mono text-[#3D3480] mt-0.5">{toast.description}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header — logo 40x40, wordmark, logout */}
-      <header className="sticky top-0 z-40 border-b-2 border-near-black bg-white px-4 py-3 flex items-center justify-between">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b-4 border-[#1A1A2E] bg-[#1A1A2E] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="" className="w-10 h-10" aria-hidden="true" />
-          <h1 className="font-heading font-black text-xl uppercase tracking-widest text-near-black">
+          <img src="/logo.png" alt="" className="w-10 h-10 rotate-[-5deg] hover:rotate-[5deg] transition-transform" aria-hidden="true" />
+          <h1
+            className="font-impact text-2xl text-[#FFD700] uppercase"
+            style={{ textShadow: '3px 0 #FF3366, -1px 0 #00CFFF' }}
+          >
             Purridiction
           </h1>
         </div>
         <button
           onClick={handleLogout}
-          className="text-sm font-black uppercase border-2 border-near-black px-3 py-1 bg-white text-near-black shadow-[3px_3px_0px_#1A1A2E] hover:shadow-[1px_1px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+          className="text-sm font-black uppercase bg-[#FF3366] text-white px-3 py-1 border-2 border-white rotate-[1deg] hover:rotate-[-1deg] transition-transform"
         >
           Logout
         </button>
       </header>
 
-      {/* Main content — max-w-2xl centered, px-4, gap-8 */}
+      {/* Main content */}
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
-        {/* Cat selector section */}
+        {/* Cat selector */}
         <section aria-label="Cat management">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-black text-lg uppercase tracking-widest">
+            <h2 className="font-impact text-2xl text-[#3D3480] uppercase rotate-[-1deg] inline-block">
               Your Cats
             </h2>
             <button
-              onClick={() => {
-                setShowAddForm(!showAddForm)
-                setError(null)
-              }}
-              className="text-sm font-black uppercase bg-hot-pink text-white px-3 py-2 border-2 border-near-black shadow-[3px_3px_0px_#1A1A2E] hover:shadow-[1px_1px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              onClick={() => { setShowAddForm(!showAddForm); setError(null) }}
+              className="text-sm font-black uppercase bg-[#FF3366] text-white px-3 py-2 border-2 border-[#1A1A2E] shadow-[4px_4px_0px_#1A1A2E] rotate-[1deg] hover:rotate-[0deg] transition-transform"
             >
               {showAddForm ? 'Cancel' : '+ Add Cat'}
             </button>
           </div>
 
-          {/* Cat list tabs */}
+          {/* Cat list */}
           {cats.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Select a cat">
-              {cats.map((cat) => (
+            <div className="flex flex-wrap gap-3 mb-4" role="tablist" aria-label="Select a cat">
+              {cats.map((cat, i) => (
                 <button
                   key={cat.id}
                   onClick={() => handleSelectCat(cat)}
                   role="tab"
                   aria-selected={selectedCat?.id === cat.id}
-                  className={`px-4 py-2 border-2 border-near-black font-black text-sm uppercase tracking-wide transition-all ${
-                    selectedCat?.id === cat.id
-                      ? 'bg-near-black text-white shadow-[0px_0px_0px_#1A1A2E]'
-                      : 'bg-white text-near-black shadow-[3px_3px_0px_#1A1A2E] hover:shadow-[1px_1px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px]'
+                  style={{
+                    backgroundColor: selectedCat?.id === cat.id ? CAT_COLORS[i % CAT_COLORS.length] : '#FFFBF0',
+                    transform: `rotate(${i % 2 === 0 ? -1 : 1}deg)`,
+                  }}
+                  className={`px-4 py-2 border-2 border-[#1A1A2E] font-black text-sm uppercase tracking-wide shadow-[3px_3px_0px_#1A1A2E] transition-all hover:scale-105 ${
+                    selectedCat?.id === cat.id ? 'text-white' : 'text-[#1A1A2E]'
                   }`}
                 >
                   {cat.name}
@@ -342,11 +292,10 @@ One name only. No explanation. No punctuation at the end.`
             </div>
           )}
 
-          {/* Empty state */}
           {cats.length === 0 && !showAddForm && (
-            <div className="border-2 border-dashed border-neutral-400 p-6 text-center">
-              <p className="text-sm text-neutral-500 font-medium">
-                No cats yet. Add your first cat to start predicting chaos.
+            <div className="border-4 border-dashed border-[#3D3480] p-6 text-center rotate-[-1deg]">
+              <p style={{ fontFamily: "'Comic Sans MS', cursive" }} className="text-sm text-[#3D3480]">
+                No cats yet. Add your first cat to start predicting chaos. 🐱
               </p>
             </div>
           )}
@@ -355,10 +304,10 @@ One name only. No explanation. No punctuation at the end.`
           {showAddForm && (
             <form
               onSubmit={handleAddCat}
-              className="border-2 border-near-black p-6 bg-white shadow-[4px_4px_0px_#1A1A2E] space-y-4"
+              className="border-4 border-[#3D3480] p-6 bg-white shadow-[8px_8px_0px_#FFD700] space-y-4 rotate-[-1deg]"
             >
               <div>
-                <label htmlFor="cat-name" className="text-xs font-black uppercase tracking-widest block mb-1">
+                <label htmlFor="cat-name" className="font-mono text-xs uppercase tracking-widest text-[#3D3480] block mb-1">
                   Cat Name
                 </label>
                 <div className="flex gap-2">
@@ -370,13 +319,13 @@ One name only. No explanation. No punctuation at the end.`
                     placeholder="e.g. Lord Whiskers"
                     required
                     maxLength={30}
-                    className="flex-1 border-2 border-near-black p-2 text-sm font-body"
+                    className="flex-1 border-2 border-[#1A1A2E] p-2 text-sm font-body bg-white"
                   />
                   <button
                     type="button"
                     onClick={handleGenerateName}
                     disabled={generatingName}
-                    className="bg-[#00CFFF] text-[#1A1A2E] font-black border-2 border-[#1A1A2E] rounded-xl px-3 py-2 text-sm hover:opacity-80 transition-opacity disabled:opacity-50"
+                    className="bg-[#00CFFF] text-[#1A1A2E] font-black border-2 border-[#1A1A2E] px-3 py-2 text-sm hover:scale-105 transition-transform disabled:opacity-50 rotate-[1deg]"
                   >
                     {generatingName ? '...' : '✨ Generate'}
                   </button>
@@ -384,19 +333,20 @@ One name only. No explanation. No punctuation at the end.`
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-widest block mb-1">
+                <label className="font-mono text-xs uppercase tracking-widest text-[#3D3480] block mb-1">
                   Age Category
                 </label>
                 <div className="flex gap-2">
-                  {['kitten', 'adult', 'senior'].map((age) => (
+                  {['kitten', 'adult', 'senior'].map((age, i) => (
                     <button
                       key={age}
                       type="button"
                       onClick={() => setNewCatAge(age)}
-                      className={`flex-1 py-2 border-2 border-near-black font-black text-sm uppercase transition-all ${
+                      style={{ transform: `rotate(${i === 0 ? -1 : i === 2 ? 1 : 0}deg)` }}
+                      className={`flex-1 py-2 border-2 border-[#1A1A2E] font-black text-sm uppercase transition-all ${
                         newCatAge === age
-                          ? 'bg-near-black text-white'
-                          : 'bg-white text-near-black hover:bg-neutral-100'
+                          ? 'bg-[#1A1A2E] text-[#FFD700]'
+                          : 'bg-white text-[#1A1A2E] hover:bg-[#FFFBF0]'
                       }`}
                     >
                       {age}
@@ -406,13 +356,13 @@ One name only. No explanation. No punctuation at the end.`
               </div>
 
               {error && (
-                <p className="text-red-orange text-sm font-bold" role="alert">{error}</p>
+                <p className="text-[#FF3366] text-sm font-black border-2 border-[#FF3366] p-2 rotate-[1deg]" role="alert">{error}</p>
               )}
 
               <button
                 type="submit"
                 disabled={addLoading}
-                className="w-full bg-hot-pink text-white font-black py-3 border-2 border-near-black uppercase tracking-widest shadow-[4px_4px_0px_#1A1A2E] hover:shadow-[2px_2px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
+                className="w-full bg-[#FF3366] text-white font-impact text-xl py-3 border-4 border-[#1A1A2E] uppercase shadow-[6px_6px_0px_#1A1A2E] rotate-[1deg] hover:rotate-[0deg] hover:scale-105 transition-all disabled:opacity-50"
               >
                 {addLoading ? 'Adding...' : 'Add Cat'}
               </button>
@@ -420,23 +370,17 @@ One name only. No explanation. No punctuation at the end.`
           )}
         </section>
 
-        {/* Selected cat content — all sections with gap-8 spacing */}
+        {/* Selected cat content */}
         {selectedCat && (
           <section className="space-y-8" aria-label={`${selectedCat.name} details`}>
-            {/* Profile Card */}
             <CatProfileCard cat={selectedCat} predictions={predictions} />
 
-            {/* Feeding Reminder — shown above prediction form */}
             {feedingReminder && (
-              <div
-                className="bg-electric-yellow border-2 border-near-black p-3 font-bold text-sm shadow-[3px_3px_0px_#1A1A2E]"
-                role="alert"
-              >
+              <div className="bg-[#FFD700] border-4 border-[#1A1A2E] p-3 font-black text-sm shadow-[4px_4px_0px_#FF3366] rotate-[-1deg]" role="alert">
                 🍽️ {feedingReminder}
               </div>
             )}
 
-            {/* Prediction Form */}
             <PredictionForm
               cat={selectedCat}
               predictions={predictions}
@@ -445,22 +389,12 @@ One name only. No explanation. No punctuation at the end.`
               onAchievementUnlock={handleAchievementUnlock}
             />
 
-            {/* Latest Result */}
             {latestResult && (
-              <ResultCard
-                result={latestResult}
-                cat={selectedCat}
-                onConfirm={handleConfirm}
-              />
+              <ResultCard result={latestResult} cat={selectedCat} onConfirm={handleConfirm} />
             )}
 
-            {/* Prediction History */}
-            <PredictionHistory
-              predictions={predictions}
-              onDelete={handleDeletePrediction}
-            />
+            <PredictionHistory predictions={predictions} onDelete={handleDeletePrediction} />
 
-            {/* Conspiracy Report — after history, before achievements */}
             <ConspiracyReport
               cat={selectedCat}
               predictions={predictions}
@@ -468,26 +402,16 @@ One name only. No explanation. No punctuation at the end.`
               onAchievementUnlock={handleConspiracyAchievement}
             />
 
-            {/* Achievement Gallery */}
             <AchievementGallery unlockedIds={unlockedIds} />
-
-            {/* Health Log */}
             <HealthLog cat={selectedCat} />
-
-            {/* Vet Report */}
-            <VetReport
-              cat={selectedCat}
-              predictions={predictions}
-              healthLogs={healthLogs}
-            />
+            <VetReport cat={selectedCat} predictions={predictions} healthLogs={healthLogs} />
           </section>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t-2 border-near-black bg-white px-4 py-4 mt-8 text-center">
-        <p className="text-xs font-mono text-neutral-400">
-          Purridiction · #HackTheKitty 2026 · World Cat Domination Day
+      <footer className="border-t-4 border-[#1A1A2E] bg-[#1A1A2E] px-4 py-4 mt-8 text-center">
+        <p className="text-xs font-mono text-[#FFD700]">
+          Purridiction · #HackTheKitty 2026 · World Cat Domination Day 👑
         </p>
       </footer>
     </div>

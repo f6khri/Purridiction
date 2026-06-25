@@ -8,10 +8,16 @@
   --color-off-white: #F5F5F0;
   --color-red-orange: #FF4500;
   --color-mint-green: #00C896;
+  --color-acid-green: #00FF88;
+  --color-cyan: #00CFFF;
+  --color-chaos-pink: #FF3366;
+  --color-chaos-orange: #FF6B00;
+  --color-warm-cream: #FFFBF0;
 
   --font-heading: "Space Grotesk", sans-serif;
   --font-body: "DM Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --font-impact: "Impact", sans-serif;
 }
 
 @keyframes fadeInOut {

@@ -1,35 +1,46 @@
+import { useState, useEffect } from 'react'
+
+const LOADING_MESSAGES = [
+  "calibrating chaos sensors...",
+  "bribing the cats...",
+  "decrypting paw prints...",
+  "consulting the oracle...",
+]
+
 export default function LoadingScreen() {
+  const [msgIndex, setMsgIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex(prev => (prev + 1) % LOADING_MESSAGES.length)
+    }, 1500)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[#3D3480] flex flex-col items-center justify-center">
-      {/* Logo */}
+    <div className="min-h-screen bg-[#3D3480] flex flex-col items-center justify-center overflow-hidden">
+      {/* Logo with bounce */}
       <img
         src="/logo.png"
         alt=""
-        className="w-20 h-20 animate-pulse mb-4"
+        className="w-20 h-20 mb-6 animate-bounce"
         aria-hidden="true"
       />
 
-      {/* Wordmark */}
-      <h1 className="font-heading font-black text-3xl text-white uppercase tracking-widest mb-4">
+      {/* Glitch headline */}
+      <h1
+        className="font-impact text-6xl text-[#FFD700] uppercase mb-4"
+        style={{ textShadow: '3px 0 #FF3366, -3px 0 #00CFFF' }}
+      >
         Purridiction
       </h1>
 
-      {/* Animated dots */}
-      <div className="flex gap-2 mb-4">
-        <span
-          className="w-2 h-2 rounded-full bg-white animate-[fadeInOut_1.2s_ease-in-out_infinite_0s]"
-        />
-        <span
-          className="w-2 h-2 rounded-full bg-white animate-[fadeInOut_1.2s_ease-in-out_infinite_0.3s]"
-        />
-        <span
-          className="w-2 h-2 rounded-full bg-white animate-[fadeInOut_1.2s_ease-in-out_infinite_0.6s]"
-        />
-      </div>
-
-      {/* Status text */}
-      <p className="font-body text-sm text-purple-200">
-        Analyzing feline threat levels...
+      {/* Rotating loading text in Comic Sans */}
+      <p
+        className="text-lg text-purple-200 italic"
+        style={{ fontFamily: "'Comic Sans MS', cursive" }}
+      >
+        {LOADING_MESSAGES[msgIndex]}
       </p>
     </div>
   )

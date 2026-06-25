@@ -11,21 +11,11 @@ export default function ResultCard({ result, cat, onConfirm }) {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
-
-      await supabase
-        .from('chaos_predictions')
-        .update({ confirmed_accurate: accurate })
-        .eq('id', result.id)
-
-      // Award bonus XP if confirmed accurate
+      await supabase.from('chaos_predictions').update({ confirmed_accurate: accurate }).eq('id', result.id)
       if (accurate) {
         const newXP = (cat.total_xp || 0) + XP_RULES.accurateConfirmBonus
-        await supabase
-          .from('cats')
-          .update({ total_xp: newXP })
-          .eq('id', cat.id)
+        await supabase.from('cats').update({ total_xp: newXP }).eq('id', cat.id)
       }
-
       setConfirmed(accurate)
       onConfirm(result.id, accurate)
     } catch (err) {
@@ -35,119 +25,82 @@ export default function ResultCard({ result, cat, onConfirm }) {
     }
   }
 
-  // Score color based on chaos level
-  const getScoreColor = (score) => {
-    if (score >= 80) return 'text-red-orange'
-    if (score >= 60) return 'text-hot-pink'
-    if (score >= 40) return 'text-brand-purple'
-    return 'text-mint-green'
-  }
-
-  // Score bar width
   const scorePercent = Math.min(Math.max(result.chaos_score, 0), 100)
 
   return (
-    <div className="border-2 border-near-black bg-white shadow-[4px_4px_0px_#1A1A2E] overflow-hidden">
-      {/* Score header */}
-      <div className="p-6 border-b-2 border-near-black">
+    <div className="bg-[#FFD700] border-4 border-[#1A1A2E] shadow-[10px_10px_0px_#FF3366] rotate-[1deg] overflow-hidden">
+      {/* Score */}
+      <div className="p-6 border-b-4 border-[#1A1A2E]">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-heading font-black text-sm uppercase tracking-widest">
-            Chaos Score
-          </h3>
-          <p className={`font-mono font-bold text-3xl ${getScoreColor(result.chaos_score)}`}>
+          <p className="font-mono text-xs uppercase tracking-widest text-[#3D3480]">Chaos Score</p>
+          <p className="font-impact text-8xl text-[#FF3366] leading-none">
             {result.chaos_score}
           </p>
         </div>
-
-        {/* Score gauge bar */}
-        <div className="w-full h-5 border-2 border-near-black bg-off-white">
+        <div className="w-full h-5 border-2 border-[#1A1A2E] bg-white">
           <div
-            className="h-full transition-all duration-500 rounded-sm"
+            className="h-full transition-all duration-500"
             style={{
               width: `${scorePercent}%`,
-              backgroundColor:
-                scorePercent >= 80 ? '#FF4500' :
-                scorePercent >= 60 ? '#FF1493' :
-                scorePercent >= 40 ? '#3D3480' :
-                '#00C896',
+              backgroundColor: scorePercent >= 80 ? '#FF3366' : scorePercent >= 60 ? '#FF6B00' : scorePercent >= 40 ? '#3D3480' : '#00FF88',
             }}
             role="progressbar"
             aria-valuenow={result.chaos_score}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`Chaos score: ${result.chaos_score} out of 100`}
           />
         </div>
       </div>
 
       {/* Genre + Window */}
-      <div className="p-6 border-b-2 border-near-black bg-off-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-1">
-              Chaos Genre
-            </p>
-            <p className="font-heading font-black text-lg text-near-black">
-              {result.chaos_genre}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-1">
-              Peak Window
-            </p>
-            <p className="font-mono font-bold text-sm text-near-black">
-              {result.predicted_window}
-            </p>
-          </div>
-        </div>
+      <div className="p-6 border-b-4 border-[#1A1A2E] bg-[#FFFBF0]">
+        <p
+          className="text-2xl text-[#3D3480] italic mb-1"
+          style={{ fontFamily: "'Comic Sans MS', cursive" }}
+        >
+          {result.chaos_genre}
+        </p>
+        <p className="font-mono text-sm text-[#1A1A2E]">
+          Peak: {result.predicted_window}
+        </p>
       </div>
 
-      {/* Gemini narration */}
+      {/* Narration */}
       {result.gemini_narration && (
-        <div className="p-6 border-b-2 border-near-black">
-          <p className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-2">
-            Scientific Analysis
-          </p>
-          <p className="text-sm leading-relaxed text-near-black italic">
-            "{result.gemini_narration}"
+        <div className="p-6 border-b-4 border-[#1A1A2E] bg-white">
+          <p className="font-mono text-xs uppercase tracking-widest text-[#3D3480] mb-2">Scientific Analysis</p>
+          <p className="font-body text-sm text-[#1A1A2E] italic leading-relaxed">
+            &ldquo;{result.gemini_narration}&rdquo;
           </p>
         </div>
       )}
 
       {/* Confirmation */}
-      <div className="p-6">
+      <div className="p-6 bg-[#FFD700]">
         {confirmed === null && (
           <div>
-            <p className="text-xs font-black uppercase tracking-widest text-center mb-3">
+            <p className="font-impact text-lg text-[#1A1A2E] text-center mb-3 uppercase">
               Did this happen?
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => handleConfirm(true)}
-                disabled={confirming}
-                className="flex-1 py-3 bg-mint-green text-near-black font-black border-2 border-near-black uppercase tracking-widest shadow-[3px_3px_0px_#1A1A2E] hover:shadow-[1px_1px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
-              >
+              <button onClick={() => handleConfirm(true)} disabled={confirming}
+                className="flex-1 py-3 bg-[#00FF88] text-[#1A1A2E] font-black border-2 border-[#1A1A2E] uppercase shadow-[4px_4px_0px_#1A1A2E] rotate-[-2deg] hover:rotate-[0deg] transition-transform disabled:opacity-50">
                 Yes
               </button>
-              <button
-                onClick={() => handleConfirm(false)}
-                disabled={confirming}
-                className="flex-1 py-3 bg-off-white text-near-black font-black border-2 border-near-black uppercase tracking-widest shadow-[3px_3px_0px_#1A1A2E] hover:shadow-[1px_1px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
-              >
+              <button onClick={() => handleConfirm(false)} disabled={confirming}
+                className="flex-1 py-3 bg-white text-[#1A1A2E] font-black border-2 border-[#1A1A2E] uppercase shadow-[4px_4px_0px_#1A1A2E] rotate-[2deg] hover:rotate-[0deg] transition-transform disabled:opacity-50">
                 No
               </button>
             </div>
           </div>
         )}
-
         {confirmed === true && (
-          <p className="text-center font-black text-sm uppercase tracking-widest text-mint-green">
-            ✓ Confirmed Accurate — +{XP_RULES.accurateConfirmBonus} XP
+          <p className="text-center font-impact text-lg text-[#00FF88] uppercase" style={{ textShadow: '2px 2px 0 #1A1A2E' }}>
+            ✓ Confirmed — +{XP_RULES.accurateConfirmBonus} XP
           </p>
         )}
-
         {confirmed === false && (
-          <p className="text-center font-black text-sm uppercase tracking-widest text-neutral-400">
+          <p className="text-center font-impact text-lg text-[#3D3480] uppercase">
             ✗ Not This Time
           </p>
         )}

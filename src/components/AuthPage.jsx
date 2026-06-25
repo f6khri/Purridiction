@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function AuthPage({ mode = 'login', setSession, onBack }) {
+export default function AuthPage({ mode = 'login', onBack }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLogin, setIsLogin] = useState(mode === 'login')
@@ -34,19 +34,27 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-off-white">
-      <div className="w-full max-w-sm border-2 border-near-black p-6 bg-white shadow-[4px_4px_0px_#1A1A2E]">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#3D3480] relative overflow-hidden">
+      {/* Background scattered emoji */}
+      <span className="absolute top-10 left-8 text-5xl opacity-10 rotate-[20deg]">🐱</span>
+      <span className="absolute bottom-20 right-12 text-5xl opacity-10 rotate-[-15deg]">👑</span>
+      <span className="absolute top-1/3 right-8 text-5xl opacity-10 rotate-[30deg]">⚡</span>
+
+      <div className="w-full max-w-sm border-4 border-[#1A1A2E] p-6 bg-[#FFFBF0] shadow-[8px_8px_0px_#FF3366] rotate-[-1deg]">
         {/* Logo and title */}
         <div className="flex items-center gap-3 mb-6">
-          <img src="/logo.png" alt="" className="w-10 h-10" aria-hidden="true" />
-          <h1 className="font-heading font-black text-2xl uppercase tracking-widest">
+          <img src="/logo.png" alt="" className="w-10 h-10 rotate-[-5deg]" aria-hidden="true" />
+          <h1
+            className="font-impact text-3xl text-[#FFD700] uppercase"
+            style={{ textShadow: '2px 2px 0 #FF3366' }}
+          >
             Purridiction
           </h1>
         </div>
 
         {/* Signup success message */}
         {signupSuccess && (
-          <div className="mb-4 p-3 border-2 border-mint-green bg-mint-green/10 text-sm font-bold text-near-black">
+          <div className="mb-4 p-3 border-4 border-[#00FF88] bg-[#00FF88]/20 text-sm font-black text-[#1A1A2E] rotate-[1deg]">
             Account created! Check your email to confirm, then log in.
           </div>
         )}
@@ -54,7 +62,7 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
         {/* Auth form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="auth-email" className="text-xs font-black uppercase tracking-widest block mb-1">
+            <label htmlFor="auth-email" className="font-mono text-xs uppercase tracking-widest text-[#3D3480] block mb-1">
               Email
             </label>
             <input
@@ -64,12 +72,12 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full border-2 border-near-black p-2 text-sm font-body"
+              className="w-full border-2 border-[#1A1A2E] p-2 text-sm font-body bg-white"
             />
           </div>
 
           <div>
-            <label htmlFor="auth-password" className="text-xs font-black uppercase tracking-widest block mb-1">
+            <label htmlFor="auth-password" className="font-mono text-xs uppercase tracking-widest text-[#3D3480] block mb-1">
               Password
             </label>
             <input
@@ -80,12 +88,12 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
               required
               minLength={6}
               autoComplete={isLogin ? "current-password" : "new-password"}
-              className="w-full border-2 border-near-black p-2 text-sm font-body"
+              className="w-full border-2 border-[#1A1A2E] p-2 text-sm font-body bg-white"
             />
           </div>
 
           {error && (
-            <p className="text-red-orange text-sm font-bold" role="alert">
+            <p className="text-[#FF3366] text-sm font-black border-2 border-[#FF3366] p-2 bg-[#FF3366]/10 rotate-[1deg]" role="alert">
               {error}
             </p>
           )}
@@ -93,9 +101,9 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-hot-pink text-white font-black py-3 border-2 border-near-black uppercase tracking-widest shadow-[4px_4px_0px_#1A1A2E] hover:shadow-[2px_2px_0px_#1A1A2E] hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
+            className="w-full bg-[#FF3366] text-white font-impact text-xl py-3 border-4 border-[#1A1A2E] uppercase tracking-widest shadow-[6px_6px_0px_#1A1A2E] rotate-[1deg] hover:rotate-[0deg] hover:scale-105 transition-all disabled:opacity-50"
           >
-            {loading ? 'Loading...' : isLogin ? 'Log In' : 'Sign Up'}
+            {loading ? '...' : isLogin ? 'Log In' : 'Sign Up'}
           </button>
         </form>
 
@@ -106,7 +114,7 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
             setError(null)
             setSignupSuccess(false)
           }}
-          className="mt-4 text-sm text-brand-purple font-medium w-full text-center hover:underline"
+          className="mt-4 text-sm text-[#3D3480] font-black w-full text-center hover:text-[#FF3366] transition-colors"
         >
           {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
         </button>
@@ -115,7 +123,7 @@ export default function AuthPage({ mode = 'login', setSession, onBack }) {
         {onBack && (
           <button
             onClick={onBack}
-            className="mt-3 text-xs text-neutral-400 font-mono w-full text-center hover:text-near-black transition-colors"
+            className="mt-3 text-xs text-[#3D3480]/60 font-mono w-full text-center hover:text-[#FF3366] transition-colors"
           >
             ← Back to Home
           </button>
