@@ -20,7 +20,18 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) return null
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-off-white">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Purridiction" className="w-10 h-10 animate-pulse" />
+          <p className="font-heading font-black text-xl uppercase tracking-widest">
+            Loading...
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return session ? <Dashboard session={session} /> : <AuthPage />
 }
