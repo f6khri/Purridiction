@@ -5,6 +5,8 @@ import PredictionForm from './PredictionForm'
 import ResultCard from './ResultCard'
 import PredictionHistory from './PredictionHistory'
 import AchievementGallery from './AchievementGallery'
+import HealthLog from './HealthLog'
+import VetReport from './VetReport'
 
 export default function Dashboard({ session }) {
   const [cats, setCats] = useState([])
@@ -22,6 +24,9 @@ export default function Dashboard({ session }) {
   // Achievements
   const [unlockedIds, setUnlockedIds] = useState([])
 
+  // Health logs
+  const [healthLogs, setHealthLogs] = useState([])
+
   // Toast
   const [toast, setToast] = useState(null)
 
@@ -33,6 +38,7 @@ export default function Dashboard({ session }) {
     if (selectedCat) {
       fetchPredictions()
       fetchAchievements()
+      fetchHealthLogs()
     }
   }, [selectedCat?.id])
 
@@ -75,6 +81,21 @@ export default function Dashboard({ session }) {
       setUnlockedIds((data || []).map(a => a.achievement_id))
     } catch (err) {
       console.error('Failed to fetch achievements:', err.message)
+    }
+  }
+
+  const fetchHealthLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('health_logs')
+        .select('*')
+        .eq('cat_id', selectedCat.id)
+        .order('logged_at', { ascending: false })
+        .limit(7)
+      if (error) throw error
+      setHealthLogs(data || [])
+    } catch (err) {
+      console.error('Failed to fetch health logs:', err.message)
     }
   }
 
@@ -362,6 +383,16 @@ export default function Dashboard({ session }) {
 
             {/* Achievement Gallery */}
             <AchievementGallery unlockedIds={unlockedIds} />
+
+            {/* Health Log */}
+            <HealthLog cat={selectedCat} />
+
+            {/* Vet Report */}
+            <VetReport
+              cat={selectedCat}
+              predictions={predictions}
+              healthLogs={healthLogs}
+            />
           </section>
         )}
       </main>
