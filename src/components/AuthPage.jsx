@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function AuthPage() {
+export default function AuthPage({ mode = 'login', setSession, onBack }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(mode === 'login')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [signupSuccess, setSignupSuccess] = useState(false)
@@ -22,7 +22,6 @@ export default function AuthPage() {
       } else {
         const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        // If email confirmation is enabled and no session returned
         if (data.user && !data.session) {
           setSignupSuccess(true)
         }
@@ -39,7 +38,7 @@ export default function AuthPage() {
       <div className="w-full max-w-sm border-2 border-near-black p-6 bg-white shadow-[4px_4px_0px_#1A1A2E]">
         {/* Logo and title */}
         <div className="flex items-center gap-3 mb-6">
-          <img src="/logo.png" alt="Purridiction" className="w-10 h-10" />
+          <img src="/logo.png" alt="" className="w-10 h-10" aria-hidden="true" />
           <h1 className="font-heading font-black text-2xl uppercase tracking-widest">
             Purridiction
           </h1>
@@ -111,6 +110,16 @@ export default function AuthPage() {
         >
           {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
         </button>
+
+        {/* Back to Home */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="mt-3 text-xs text-neutral-400 font-mono w-full text-center hover:text-near-black transition-colors"
+          >
+            ← Back to Home
+          </button>
+        )}
       </div>
     </div>
   )
