@@ -8,13 +8,15 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    // Check existing session on mount
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, updatedSession) => {
+      setSession(updatedSession)
     })
 
     return () => subscription.unsubscribe()
@@ -22,16 +24,21 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-off-white">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Purridiction" className="w-10 h-10 animate-pulse" />
-          <p className="font-heading font-black text-xl uppercase tracking-widest">
-            Loading...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-off-white">
+        <div className="flex items-center gap-3 mb-4">
+          <img src="/logo.png" alt="" className="w-10 h-10 animate-pulse" aria-hidden="true" />
+          <p className="font-heading font-black text-2xl uppercase tracking-widest text-brand-purple">
+            Purridiction
           </p>
         </div>
+        <p className="font-heading font-black text-sm uppercase tracking-widest text-neutral-400">
+          Loading...
+        </p>
       </div>
     )
   }
 
-  return session ? <Dashboard session={session} /> : <AuthPage />
+  return session
+    ? <Dashboard session={session} setSession={setSession} />
+    : <AuthPage setSession={setSession} />
 }
