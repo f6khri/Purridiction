@@ -16,10 +16,6 @@ export default function HealthLog({ cat }) {
     notes: "",
   });
 
-  useEffect(() => {
-    fetchLogs();
-  }, [cat.id]);
-
   const fetchLogs = async () => {
     const { data } = await supabase
       .from("health_logs")
@@ -29,6 +25,10 @@ export default function HealthLog({ cat }) {
       .limit(7);
     setLogs(data || []);
   };
+
+  useEffect(() => {
+    fetchLogs();
+  }, [cat.id]);
 
   const handleSave = async () => {
     setError(null);
@@ -70,7 +70,7 @@ export default function HealthLog({ cat }) {
         body: { prompt },
       });
       setInsight(data.narration);
-    } catch (err) {
+    } catch {
       setInsight(null);
     } finally {
       setLoadingInsight(false);

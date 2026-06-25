@@ -43,7 +43,7 @@ export default function ConspiracyReport({ cat, predictions, unlockedIds, onAchi
         }]);
         onAchievementUnlock("intelligence_breach");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to generate report. Try again.");
     } finally {
       setLoading(false);

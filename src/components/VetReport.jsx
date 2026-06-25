@@ -29,7 +29,7 @@ export default function VetReport({ cat, predictions, healthLogs }) {
       });
       if (fnError) throw fnError;
       setReport(data.narration);
-    } catch (err) {
+    } catch {
       setError("Failed to generate report. Try again.");
     } finally {
       setLoading(false);
