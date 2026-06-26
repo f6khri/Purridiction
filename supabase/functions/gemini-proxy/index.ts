@@ -40,13 +40,35 @@ serve(async (req) => {
       }
     );
 
+    // Check if Gemini responded with an error
+    if (!geminiRes.ok) {
+      const errorText = await geminiRes.text();
+      console.log("Gemini error:", errorText);
+      return new Response(JSON.stringify({ error: "Gemini API error", narration: "" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const data = await geminiRes.json();
-    const narration = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Try multiple response paths
+    const narration =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.candidates?.[0]?.output ||
+      data.text ||
+      "";
+
+    // Log if empty for debugging
+    if (!narration) {
+      console.log("Gemini response:", JSON.stringify(data));
+    }
 
     return new Response(JSON.stringify({ narration }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.log("Edge function error:", error.message);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
