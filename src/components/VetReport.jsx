@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { callGemini } from "../lib/gemini";
 import { buildVetReportPrompt } from "../lib/vetReport";
 
 export default function VetReport({ cat, predictions, healthLogs }) {
@@ -24,9 +25,8 @@ export default function VetReport({ cat, predictions, healthLogs }) {
     setError(null);
     try {
       const prompt = buildVetReportPrompt(cat, predictions, healthLogs);
-      const { data, error: fnError } = await supabase.functions.invoke("gemini-proxy", { body: { prompt } });
-      if (fnError) throw fnError;
-      setReport(data.narration);
+      const narration = await callGemini(prompt);
+      setReport(narration);
     } catch {
       setError("Failed to generate report. Try again.");
     } finally {

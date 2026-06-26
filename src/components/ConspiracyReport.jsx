@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { callGemini } from "../lib/gemini";
 import { calculateReportMetrics, buildConspiracyPrompt } from "../lib/conspiracyReport";
 
 export default function ConspiracyReport({ cat, predictions, unlockedIds, onAchievementUnlock }) {
@@ -23,9 +24,8 @@ export default function ConspiracyReport({ cat, predictions, unlockedIds, onAchi
     try {
       const metrics = calculateReportMetrics(predictions, cat);
       const prompt = buildConspiracyPrompt(metrics);
-      const { data, error: fnError } = await supabase.functions.invoke("gemini-proxy", { body: { prompt } });
-      if (fnError) throw fnError;
-      setReport({ text: data.narration, metrics });
+      const narration = await callGemini(prompt);
+      setReport({ text: narration, metrics });
       if (!unlockedIds.includes("intelligence_breach")) {
         await supabase.from("cat_achievements").insert([{ cat_id: cat.id, user_id: cat.user_id, achievement_id: "intelligence_breach" }]);
         onAchievementUnlock("intelligence_breach");

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { callGemini } from '../lib/gemini'
 import { analyzeChaos } from '../lib/chaosEngine'
 import { XP_RULES } from '../lib/xpSystem'
 import { checkAchievements } from '../lib/achievements'
@@ -54,9 +55,7 @@ Given this data:
 
 Write exactly 2 sentences. First sentence: a deadpan scientific observation about the upcoming chaos. Second sentence: a warning to the cat's owner. Be funny but keep it short.`
 
-      const { data: geminiData, error: geminiError } = await supabase.functions.invoke("gemini-proxy", { body: { prompt } })
-      if (geminiError) throw geminiError
-      const narration = geminiData?.narration || ""
+      const narration = await callGemini(prompt)
 
       const { data: prediction, error: insertError } = await supabase
         .from('chaos_predictions')

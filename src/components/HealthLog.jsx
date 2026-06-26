@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { callGemini } from "../lib/gemini";
 import { validateHealthLog, buildHealthInsightPrompt, getWaterIntakeFlag, getMoodFlag } from "../lib/healthLog";
 
 const MOOD_COLORS = { calm: '#00CFFF', playful: '#00FF88', anxious: '#FFD700', aggressive: '#FF3366', lethargic: '#3D3480' }
@@ -40,8 +41,8 @@ export default function HealthLog({ cat }) {
     setLoadingInsight(true);
     try {
       const prompt = buildHealthInsightPrompt(cat, logs);
-      const { data } = await supabase.functions.invoke("gemini-proxy", { body: { prompt } });
-      setInsight(data.narration);
+      const narration = await callGemini(prompt);
+      setInsight(narration);
     } catch { setInsight(null); }
     finally { setLoadingInsight(false); }
   };

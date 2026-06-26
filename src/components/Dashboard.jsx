@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { callGemini } from '../lib/gemini'
 import CatProfileCard from './CatProfileCard'
 import PredictionForm from './PredictionForm'
 import ResultCard from './ResultCard'
@@ -115,11 +116,8 @@ Rules:
 Format: [Title] [Name] like Admiral Fluffington or Lord Shadowpaw.
 One name only. No explanation. No punctuation at the end.`
 
-      const { data, error: fnError } = await supabase.functions.invoke("gemini-proxy", {
-        body: { prompt },
-      })
-      if (fnError) throw fnError
-      const name = (data?.narration || '').trim().slice(0, 30)
+      const narration = await callGemini(prompt)
+      const name = narration.trim().slice(0, 30)
       if (name) setNewCatName(name)
     } catch {
       // Silently fail
