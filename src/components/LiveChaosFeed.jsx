@@ -25,7 +25,7 @@ function getScoreColor(score) {
   return '#00FF88'
 }
 
-export default function LiveChaosFeed({ session }) {
+export default function LiveChaosFeed() {
   const [feed, setFeed] = useState([])
   const [loading, setLoading] = useState(true)
 

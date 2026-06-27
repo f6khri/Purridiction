@@ -9,81 +9,41 @@ const MESSAGES = [
   "analyzing ankle threat levels...",
   "counting knocked items...",
 ]
-
-const EMOJIS = ['🐱', '👑', '⚡', '🔮', '😈', '⚔️', '🌙', '🐱', '👑', '⚡', '🔮', '😈', '⚔️', '🌙', '🐱']
+const EMOJIS = ['🐱','👑','⚡','🔮','😈','⚔️','🌙','💀','🔥','👹','🐱','👑','⚡','🔮','😈','⚔️','🌙','💀','🔥','👹']
 
 export default function LoadingScreen() {
   const [msgIndex, setMsgIndex] = useState(0)
-  const [progress, setProgress] = useState(0)
+  const [progress, setProgress] = useState(20)
 
   useEffect(() => {
-    const msgInterval = setInterval(() => {
-      setMsgIndex(prev => (prev + 1) % MESSAGES.length)
-    }, 1500)
-    const progInterval = setInterval(() => {
-      setProgress(prev => prev >= 100 ? 0 : prev + 2)
-    }, 50)
-    return () => { clearInterval(msgInterval); clearInterval(progInterval) }
+    const m = setInterval(() => setMsgIndex(p => (p + 1) % MESSAGES.length), 1500)
+    const p = setInterval(() => setProgress(v => v >= 95 ? 20 : v + 1.5), 60)
+    return () => { clearInterval(m); clearInterval(p) }
   }, [])
 
   return (
     <div className="min-h-screen bg-[#3D3480] flex flex-col items-center justify-center overflow-hidden relative"
-      style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)' }}>
+      style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px)', backgroundSize: '100% 6px', animation: 'shimmer 8s linear infinite' }}>
 
-      {/* Floating emojis */}
-      {EMOJIS.map((emoji, i) => (
-        <span
-          key={i}
-          className="absolute text-4xl pointer-events-none"
-          style={{
-            left: `${(i * 7) % 100}%`,
-            fontSize: `${20 + (i % 4) * 12}px`,
-            animation: `floatUp ${8 + (i % 5) * 2}s linear infinite`,
-            animationDelay: `${i * 0.7}s`,
-            opacity: 0,
-          }}
-        >{emoji}</span>
+      {EMOJIS.map((e, i) => (
+        <span key={i} className="absolute pointer-events-none"
+          style={{ left: `${(i * 5.3) % 100}%`, fontSize: `${30 + (i % 5) * 15}px`, animation: `floatUp ${3 + (i % 8) * 1.2}s linear infinite`, animationDelay: `${i * 0.5}s`, opacity: 0 }}>
+          {e}
+        </span>
       ))}
 
-      {/* Logo */}
-      <img
-        src="/logo.png" alt="" aria-hidden="true"
-        className="w-20 h-20 mb-6"
-        style={{
-          animation: 'logoRock 2s ease-in-out infinite, float 3s ease-in-out infinite',
-          filter: 'drop-shadow(0 0 10px #FF3366) drop-shadow(0 0 20px #00CFFF)',
-        }}
-      />
+      <div className="text-[120px] mb-4" style={{ animation: 'logoRock 0.6s ease-in-out infinite', filter: 'drop-shadow(0 0 30px #FF3366) drop-shadow(0 0 60px #00CFFF)' }}>🐱</div>
 
-      {/* Glitch title */}
-      <div className="relative mb-4">
-        <h1
-          className="font-impact text-7xl sm:text-[80px] text-[#FFD700] uppercase relative"
-          style={{ animation: 'glitch 4s infinite', textShadow: '4px 0 #FF3366, -4px 0 #00CFFF' }}
-        >
-          Purridiction
-        </h1>
-      </div>
+      <h1 className="font-impact text-[88px] text-[#FFD700] uppercase mb-2" style={{ letterSpacing: '10px', textShadow: '3px 0 #FF3366, -3px 0 #00CFFF', animation: 'glitch 1.5s infinite', transform: 'rotate(1deg)' }}>
+        Purridiction
+      </h1>
 
-      {/* Loading text */}
-      <p
-        className="text-lg text-purple-200 italic mb-8"
-        style={{ fontFamily: "'Comic Sans MS', cursive" }}
-      >
-        {MESSAGES[msgIndex]}
-      </p>
+      <p className="text-white text-lg mb-1" style={{ fontFamily: "'Comic Sans MS', cursive", transform: 'rotate(-1deg)' }}>your cat is planning something.</p>
+      <p className="font-mono text-[#00FF88] text-[11px] mb-4" style={{ letterSpacing: '4px' }}>// initializing threat assessment //</p>
+      <p className="text-[#C4B5FD] text-base mb-8" style={{ fontFamily: "'Comic Sans MS', cursive" }}>{MESSAGES[msgIndex]}</p>
 
-      {/* Progress bar */}
-      <div className="w-64 h-4 border-[3px] border-[#FFD700] bg-[#1A1A2E] relative overflow-hidden">
-        <div
-          className="h-full transition-all duration-100"
-          style={{
-            width: `${progress}%`,
-            background: 'linear-gradient(90deg, #FF3366, #FFD700, #00CFFF)',
-            backgroundSize: '200% 100%',
-            animation: 'progressShimmer 2s linear infinite',
-          }}
-        />
+      <div className="w-[300px] h-5 relative" style={{ border: '4px solid #FFD700', transform: 'rotate(-1deg)' }}>
+        <div className="h-full transition-all duration-100" style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #FF3366, #FFD700, #00CFFF, #00FF88)', backgroundSize: '300% 100%', animation: 'progressShimmer 2s linear infinite' }} />
       </div>
     </div>
   )

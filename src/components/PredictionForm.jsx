@@ -48,52 +48,54 @@ export default function PredictionForm({ cat, predictions, unlockedIds, onPredic
   const formatHour = (h) => `${h % 12 || 12}:00 ${h < 12 ? 'AM' : 'PM'}`
 
   return (
-    <form onSubmit={handlePredict} className="bg-[#FFFBF0] border-[5px] border-[#3D3480] p-6 rotate-[1deg] space-y-4 relative overflow-hidden"
-      style={{ boxShadow: '12px 12px 0 #3D3480' }}>
-      {/* TOP SECRET watermark */}
-      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-impact text-[80px] text-[#3D3480] opacity-[0.04] rotate-[-30deg] pointer-events-none select-none">TOP SECRET</span>
-
-      <h3 className="font-impact text-4xl text-[#FF3366] rotate-[-1deg] inline-block relative z-10"
-        style={{ textShadow: '3px 3px 0 #1A1A2E' }}>Chaos Prediction</h3>
+    <form onSubmit={handlePredict} className="bg-[#FFFBF0] p-6 space-y-4 relative overflow-hidden"
+      style={{ border: '6px solid #3D3480', boxShadow: '14px 14px 0 #3D3480', transform: 'rotate(1.5deg)' }}>
+      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-impact text-[88px] text-[#FF3366] opacity-[0.04] pointer-events-none select-none" style={{ transform: 'translate(-50%,-50%) rotate(-28deg)' }}>TOP SECRET</span>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Last Meal: {formatHour(lastMealHour)}</label>
-        <input type="range" min="0" max="23" value={lastMealHour} onChange={(e) => setLastMealHour(parseInt(e.target.value))} className="w-full accent-[#FF3366]" />
+        <span className="font-impact text-[40px] text-[#FF3366] inline-block" style={{ textShadow: '3px 3px 0 #1A1A2E', transform: 'rotate(-1deg)' }}>CHAOS</span>
+        <span className="text-[20px] text-[#3D3480] inline-block ml-2" style={{ fontFamily: "'Comic Sans MS', cursive", transform: 'rotate(1deg)' }}>prediction</span>
       </div>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Played Today?</label>
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Last Meal: {formatHour(lastMealHour)}</label>
+        <input type="range" min="0" max="23" value={lastMealHour} onChange={(e) => setLastMealHour(parseInt(e.target.value))} className="w-full" style={{ accentColor: '#FF3366' }} />
+      </div>
+
+      <div className="relative z-10">
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Played Today?</label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setPlayedToday(true)}
-            className={`flex-1 py-2 border-2 border-[#1A1A2E] font-impact text-sm uppercase ${playedToday ? 'bg-[#00FF88] text-[#1A1A2E] rotate-[-2deg]' : 'bg-white'}`}
-            style={playedToday ? { boxShadow: '4px 4px 0 #1A1A2E' } : {}}>Yes</button>
+            className="flex-1 py-2 font-impact text-sm uppercase"
+            style={{ background: playedToday ? '#00FF88' : 'white', border: '3px solid #1A1A2E', transform: 'rotate(-3deg)', ...(playedToday ? { boxShadow: '5px 5px 0 #1A1A2E' } : {}) }}>Yes</button>
           <button type="button" onClick={() => setPlayedToday(false)}
-            className={`flex-1 py-2 border-2 border-[#1A1A2E] font-impact text-sm uppercase ${!playedToday ? 'bg-[#FF3366] text-white rotate-[2deg]' : 'bg-white'}`}
-            style={!playedToday ? { boxShadow: '4px 4px 0 #1A1A2E' } : {}}>No</button>
+            className="flex-1 py-2 font-impact text-sm uppercase"
+            style={{ background: !playedToday ? '#FF3366' : 'white', color: !playedToday ? 'white' : '#1A1A2E', border: '3px solid #1A1A2E', transform: 'rotate(3deg)', ...(!playedToday ? { boxShadow: '5px 5px 0 #1A1A2E' } : {}) }}>No</button>
         </div>
       </div>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Weather</label>
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Weather</label>
         <div className="flex gap-2">
-          {[{ v: 'sunny', l: '☀️ Sunny', r: -1 }, { v: 'cloudy', l: '☁️ Cloudy', r: 0 }, { v: 'rainy', l: '🌧️ Rainy', r: 1 }].map(({ v, l, r }) => (
-            <button key={v} type="button" onClick={() => setWeather(v)}
-              style={{ transform: `rotate(${r}deg)`, boxShadow: weather === v ? '3px 3px 0 #1A1A2E' : 'none' }}
-              className={`flex-1 py-2 border-[3px] border-[#1A1A2E] font-impact text-xs uppercase ${weather === v ? 'bg-[#1A1A2E] text-[#FFD700]' : 'bg-white text-[#1A1A2E]'}`}>{l}</button>
-          ))}
+          <button type="button" onClick={() => setWeather('sunny')} className="flex-1 py-2 font-impact text-sm uppercase"
+            style={{ background: weather === 'sunny' ? '#FFD700' : 'white', border: '3px solid #1A1A2E', transform: 'rotate(-2deg)', ...(weather === 'sunny' ? { boxShadow: '4px 4px 0 #1A1A2E' } : {}) }}>☀️ Sunny</button>
+          <button type="button" onClick={() => setWeather('cloudy')} className="flex-1 py-2 font-impact text-sm uppercase"
+            style={{ background: weather === 'cloudy' ? '#9CA3AF' : 'white', color: weather === 'cloudy' ? 'white' : '#1A1A2E', border: '3px solid #1A1A2E', transform: 'rotate(1deg)', ...(weather === 'cloudy' ? { boxShadow: '4px 4px 0 #1A1A2E' } : {}) }}>☁️ Cloudy</button>
+          <button type="button" onClick={() => setWeather('rainy')} className="flex-1 py-2 font-impact text-sm uppercase"
+            style={{ background: weather === 'rainy' ? '#00CFFF' : 'white', border: '3px solid #1A1A2E', transform: 'rotate(-1deg)', ...(weather === 'rainy' ? { boxShadow: '4px 4px 0 #1A1A2E' } : {}) }}>🌧️ Rainy</button>
         </div>
       </div>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Hours Slept: {hoursSlept}h</label>
-        <input type="range" min="0" max="24" value={hoursSlept} onChange={(e) => setHoursSlept(parseInt(e.target.value))} className="w-full accent-[#3D3480]" />
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Hours Slept: {hoursSlept}h</label>
+        <input type="range" min="0" max="24" value={hoursSlept} onChange={(e) => setHoursSlept(parseInt(e.target.value))} className="w-full" style={{ accentColor: '#3D3480' }} />
       </div>
 
-      {error && <p className="text-[#FF3366] text-sm font-black border-2 border-[#FF3366] p-2 rotate-[1deg] relative z-10" role="alert">{error}</p>}
+      {error && <p className="text-[#FF3366] text-sm font-black p-2 relative z-10" style={{ border: '2px solid #FF3366', transform: 'rotate(1deg)' }} role="alert">{error}</p>}
 
       <button type="submit" disabled={loading}
-        className="w-full bg-[#FF3366] text-white font-impact text-2xl py-5 border-4 border-[#1A1A2E] uppercase rotate-[-1deg] hover:rotate-[0deg] hover:scale-[1.02] transition-all disabled:opacity-50 relative z-10"
-        style={{ boxShadow: '10px 10px 0 #1A1A2E', animation: loading ? 'none' : 'pulseScale 3s ease-in-out infinite' }}>
+        className="w-full text-white font-impact text-[32px] py-6 uppercase relative z-10 hover:scale-[1.02] transition-transform disabled:opacity-50"
+        style={{ background: '#FF3366', border: '5px solid #1A1A2E', transform: 'rotate(-1.5deg)', boxShadow: '12px 12px 0 #1A1A2E', letterSpacing: '4px', animation: loading ? 'none' : 'pulseScale 3s infinite' }}>
         {loading ? 'PREDICTING...' : 'PREDICT CHAOS 🔮'}
       </button>
     </form>

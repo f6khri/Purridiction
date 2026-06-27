@@ -303,6 +303,11 @@ export default function Dashboard({ session }) {
         {/* Tab content — only shows when a cat is selected */}
         {selectedCat && (
           <>
+            {/* Selected cat banner */}
+            <div className="font-mono text-xs text-white py-2 px-4" style={{ borderBottom: '4px solid #1A1A2E', backgroundColor: CAT_COLORS[cats.findIndex(c => c.id === selectedCat.id) % CAT_COLORS.length]?.bg || '#FF3366' }}>
+              // ANALYZING: {selectedCat.name.toUpperCase()} //<span style={{ animation: 'blink 1s infinite' }}>_</span>
+            </div>
+
             {/* TAB: HOME */}
             <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
               <section className="space-y-8">
@@ -356,28 +361,27 @@ export default function Dashboard({ session }) {
       </main>
 
       {/* Bottom Tab Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1A1A2E] flex justify-around py-2"
-        style={{ borderTop: '4px solid #FFD700', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1A1A2E] flex justify-around items-end"
+        style={{ borderTop: '5px solid #FFD700', paddingBottom: 'max(8px, env(safe-area-inset-bottom))', paddingTop: '6px' }}
         aria-label="Main navigation">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center gap-1 px-2 py-1 transition-all ${
-              activeTab === tab.id ? 'opacity-100' : 'opacity-50'
-            }`}
-            style={activeTab === tab.id ? { borderTop: '3px solid #FFD700', marginTop: '-4px', paddingTop: '5px' } : {}}
-            aria-label={tab.label}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
-          >
-            <span className="text-2xl">{tab.emoji}</span>
-            <span className={`font-mono text-[9px] uppercase tracking-widest ${
-              activeTab === tab.id ? 'text-[#FFD700] block' : 'text-neutral-500 hidden sm:block'
-            }`}>
-              {tab.label}
-            </span>
-          </button>
-        ))}
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex flex-col items-center gap-0.5 px-3 py-1 transition-all relative"
+              style={isActive ? { background: '#FFD700', color: '#1A1A2E', borderRadius: '8px 8px 0 0', marginTop: '-8px', padding: '8px 12px 4px' } : { opacity: 0.5 }}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="text-2xl" style={isActive ? { animation: 'tabBounce 1s infinite' } : {}}>{tab.emoji}</span>
+              {isActive && (
+                <span className="font-mono text-[8px] uppercase tracking-widest text-[#1A1A2E] font-black">{tab.label}</span>
+              )}
+            </button>
+          )
+        })}
       </nav>
     </div>
   )

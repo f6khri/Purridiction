@@ -20,7 +20,6 @@
   --font-impact: "Impact", sans-serif;
 }
 
-/* Animations */
 @keyframes fadeInOut {
   0%, 100% { opacity: 0.2; }
   50% { opacity: 1; }
@@ -39,18 +38,18 @@
 }
 
 @keyframes glitch {
-  0%, 90%, 100% { transform: translate(0); }
-  92% { transform: translate(-3px, 1px); }
-  94% { transform: translate(3px, -1px); }
-  96% { transform: translate(-2px, -1px); }
-  98% { transform: translate(2px, 1px); }
+  0%, 85%, 100% { transform: skewX(0); text-shadow: 3px 0 #FF3366, -3px 0 #00CFFF; }
+  87% { transform: skewX(-2deg); text-shadow: 5px 0 #FF3366, -5px 0 #00CFFF; }
+  89% { transform: skewX(3deg); text-shadow: -3px 0 #FF3366, 3px 0 #00CFFF; }
+  91% { transform: skewX(-1deg); text-shadow: 4px 0 #FF3366, -4px 0 #00CFFF; }
+  93% { transform: skewX(0); }
 }
 
 @keyframes wobble {
-  0%, 100% { transform: rotate(-2deg); }
-  25% { transform: rotate(2deg); }
-  50% { transform: rotate(-1deg); }
-  75% { transform: rotate(1.5deg); }
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  25% { transform: rotate(2deg) scale(1.03); }
+  50% { transform: rotate(-1deg) scale(1); }
+  75% { transform: rotate(1.5deg) scale(1.02); }
 }
 
 @keyframes shimmer {
@@ -60,8 +59,8 @@
 
 @keyframes shake {
   0%, 100% { transform: translateX(0) rotate(-2deg); }
-  25% { transform: translateX(-2px) rotate(-2deg); }
-  75% { transform: translateX(2px) rotate(-2deg); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(-2deg); }
 }
 
 @keyframes wiggle {
@@ -79,11 +78,6 @@
   100% { transform: translateX(0) rotate(3deg); }
 }
 
-@keyframes scanline {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 100%; }
-}
-
 @keyframes progressShimmer {
   0% { background-position: -100% 0; }
   100% { background-position: 200% 0; }
@@ -95,13 +89,42 @@
 }
 
 @keyframes pulseScale {
-  0%, 100% { transform: scale(1) rotate(2deg); }
-  50% { transform: scale(1.05) rotate(2deg); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 @keyframes logoRock {
-  0%, 100% { transform: rotate(-8deg); }
-  50% { transform: rotate(3deg); }
+  0%, 100% { transform: rotate(-12deg) translateY(0); }
+  50% { transform: rotate(8deg) translateY(-30px); }
+}
+
+@keyframes logoChill {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50% { transform: rotate(4deg) scale(1.05); }
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes barGrow {
+  0% { width: 0; }
+}
+
+@keyframes countUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-200px) rotate(720deg); opacity: 0; }
+}
+
+@keyframes tabBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 @layer base {
