@@ -14,6 +14,7 @@ import CatPersona from './CatPersona'
 import WeatherCorrelation from './WeatherCorrelation'
 import LiveChaosFeed from './LiveChaosFeed'
 import ChaosTimeMachine from './ChaosTimeMachine'
+import ChaosCourt from './ChaosCourt'
 
 const CAT_COLORS = [
   { bg: '#FF3366', text: 'white', shadow: '#FFD700', rotate: '-2deg' },
@@ -342,6 +343,7 @@ export default function Dashboard({ session }) {
             <div style={{ display: activeTab === 'identity' ? 'block' : 'none' }}>
               <section className="space-y-8">
                 <CatPersona predictions={predictions} cat={selectedCat} />
+                <ChaosCourt cat={selectedCat} predictions={predictions} onAchievementUnlock={handleAchievementUnlock} />
                 <ChaosDNA predictions={predictions} cat={selectedCat} />
               </section>
             </div>

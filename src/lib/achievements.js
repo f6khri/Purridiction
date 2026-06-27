@@ -61,6 +61,13 @@ export const ACHIEVEMENTS = [
     emoji: "🕵️",
     check: (predictions, meta) => meta?.conspiracyGenerated === true,
   },
+  {
+    id: "court_in_session",
+    title: "Court Is In Session",
+    description: "Took your cat to Chaos Court",
+    emoji: "⚖️",
+    check: (predictions, meta) => meta?.courtUsed === true,
+  },
 ];
 
 export function checkAchievements(predictions, unlockedIds, meta = {}) {
