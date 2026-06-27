@@ -16,14 +16,13 @@ import LiveChaosFeed from './LiveChaosFeed'
 import ChaosTimeMachine from './ChaosTimeMachine'
 
 const CAT_COLORS = [
-  { bg: '#FF3366', text: 'white', shadow: '#FFD700' },
-  { bg: '#00CFFF', text: '#1A1A2E', shadow: '#3D3480' },
-  { bg: '#FFD700', text: '#1A1A2E', shadow: '#FF3366' },
-  { bg: '#00FF88', text: '#1A1A2E', shadow: '#FF6B00' },
-  { bg: '#FF6B00', text: 'white', shadow: '#FFD700' },
-  { bg: '#3D3480', text: 'white', shadow: '#00CFFF' },
+  { bg: '#FF3366', text: 'white', shadow: '#FFD700', rotate: '-2deg' },
+  { bg: '#00CFFF', text: '#1A1A2E', shadow: '#3D3480', rotate: '1.5deg' },
+  { bg: '#FFD700', text: '#1A1A2E', shadow: '#FF3366', rotate: '-1deg' },
+  { bg: '#00FF88', text: '#1A1A2E', shadow: '#FF6B00', rotate: '2deg' },
+  { bg: '#FF6B00', text: 'white', shadow: '#FFD700', rotate: '-1.5deg' },
+  { bg: '#3D3480', text: 'white', shadow: '#00CFFF', rotate: '1deg' },
 ]
-const CAT_ROTATIONS = [-2, 1.5, -1, 2, -1.5, 1]
 
 const TABS = [
   { id: 'home', emoji: '🏠', label: 'HOME' },
@@ -117,14 +116,18 @@ export default function Dashboard({ session }) {
 
   const handleSelectCat = (cat) => { if (cat.id !== selectedCat?.id) setSelectedCat(cat) }
 
-  const handleDeleteCat = async (cat) => {
-    if (!window.confirm(`Delete ${cat.name}? This will delete all their predictions and data.`)) return
+  const handleDeleteCat = async (catId, catName) => {
     try {
-      const { error } = await supabase.from('cats').delete().eq('id', cat.id)
+      const { error } = await supabase.from('cats').delete().eq('id', catId)
       if (error) throw error
-      setCats(prev => prev.filter(c => c.id !== cat.id))
-      if (selectedCat?.id === cat.id) setSelectedCat(null)
-    } catch (err) { console.error('Delete cat failed:', err.message) }
+      setCats(prev => prev.filter(c => c.id !== catId))
+      if (selectedCat?.id === catId) {
+        setSelectedCat(null)
+      }
+    } catch (err) {
+      console.error('Error deleting cat:', err)
+      alert(`Failed to delete ${catName}. Please try again.`)
+    }
   }
 
   const handlePrediction = (result) => { setLatestResult(result); setPredictions(prev => [result, ...prev]); setSelectedCat(prev => ({ ...prev, total_xp: result.newTotalXP })); setCats(prev => prev.map(c => c.id === selectedCat.id ? { ...c, total_xp: result.newTotalXP } : c)) }
@@ -145,7 +148,7 @@ export default function Dashboard({ session }) {
   const feedingReminder = selectedCat ? getFeedingReminder() : null
 
   return (
-    <div className="min-h-screen bg-[#1A1A2E] pb-20">
+    <div className="pb-20" style={{ background: '#1A1A2E', minHeight: '100vh' }}>
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 border-[5px] border-[#1A1A2E] bg-[#FFD700] p-4 max-w-xs rotate-[3deg]"
@@ -196,24 +199,60 @@ export default function Dashboard({ session }) {
 
           {cats.length > 0 && (
             <div className="flex flex-wrap gap-3 mb-4" role="tablist">
-              {cats.map((cat, i) => {
-                const color = CAT_COLORS[i % CAT_COLORS.length]
-                const rotation = CAT_ROTATIONS[i % CAT_ROTATIONS.length]
-                return (
-                  <div key={cat.id} className="relative group">
-                    <button onClick={() => handleSelectCat(cat)} role="tab" aria-selected={selectedCat?.id === cat.id}
-                      style={{ backgroundColor: color.bg, color: color.text, boxShadow: `5px 5px 0 ${color.shadow}`, border: '3px solid #1A1A2E', transform: `rotate(${rotation}deg)` }}
-                      className="px-4 py-2 font-impact text-sm uppercase hover:scale-110 transition-transform">
-                      {cat.name}
-                    </button>
-                    <button onClick={() => handleDeleteCat(cat)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-[#FF3366] text-white font-black text-xs rounded-full border-2 border-[#1A1A2E] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
-                      aria-label={`Delete ${cat.name}`}>
-                      ✕
-                    </button>
-                  </div>
-                )
-              })}
+              {cats.map((cat, index) => (
+                <div key={cat.id} style={{ position: 'relative', display: 'inline-block' }}>
+                  <button
+                    onClick={() => handleSelectCat(cat)}
+                    role="tab"
+                    aria-selected={selectedCat?.id === cat.id}
+                    style={{
+                      backgroundColor: CAT_COLORS[index % CAT_COLORS.length].bg,
+                      color: CAT_COLORS[index % CAT_COLORS.length].text,
+                      boxShadow: `5px 5px 0 ${CAT_COLORS[index % CAT_COLORS.length].shadow}`,
+                      transform: `rotate(${CAT_COLORS[index % CAT_COLORS.length].rotate})`,
+                      border: '3px solid #1A1A2E',
+                      fontFamily: 'Impact, sans-serif',
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      padding: '10px 20px',
+                      cursor: 'pointer',
+                      ...(selectedCat?.id === cat.id ? { outline: '3px solid white', outlineOffset: '2px' } : {}),
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (window.confirm(`Delete ${cat.name}? All their predictions and data will be permanently deleted.`)) {
+                        handleDeleteCat(cat.id, cat.name)
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      right: '-10px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: '#FF3366',
+                      color: 'white',
+                      border: '2px solid #1A1A2E',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontFamily: 'Impact, sans-serif',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '2px 2px 0 #1A1A2E',
+                      zIndex: 10,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
