@@ -10,9 +10,28 @@ import HealthLog from './HealthLog'
 import VetReport from './VetReport'
 import ConspiracyReport from './ConspiracyReport'
 import ChaosDNA from './ChaosDNA'
+import CatPersona from './CatPersona'
+import WeatherCorrelation from './WeatherCorrelation'
+import LiveChaosFeed from './LiveChaosFeed'
+import ChaosTimeMachine from './ChaosTimeMachine'
 
-const CAT_COLORS = ['#FF3366', '#00CFFF', '#FFD700', '#00FF88', '#FF6B00', '#3D3480']
-const CAT_ROTATIONS = [-2, 1.5, -1, 2.5, -1.5, 2]
+const CAT_COLORS = [
+  { bg: '#FF3366', text: 'white', shadow: '#FFD700' },
+  { bg: '#00CFFF', text: '#1A1A2E', shadow: '#3D3480' },
+  { bg: '#FFD700', text: '#1A1A2E', shadow: '#FF3366' },
+  { bg: '#00FF88', text: '#1A1A2E', shadow: '#FF6B00' },
+  { bg: '#FF6B00', text: 'white', shadow: '#FFD700' },
+  { bg: '#3D3480', text: 'white', shadow: '#00CFFF' },
+]
+const CAT_ROTATIONS = [-2, 1.5, -1, 2, -1.5, 1]
+
+const TABS = [
+  { id: 'home', emoji: '🏠', label: 'HOME' },
+  { id: 'predict', emoji: '🔮', label: 'PREDICT' },
+  { id: 'intel', emoji: '🕵️', label: 'INTEL' },
+  { id: 'identity', emoji: '😼', label: 'IDENTITY' },
+  { id: 'community', emoji: '🌍', label: 'COMMUNITY' },
+]
 
 export default function Dashboard({ session }) {
   const [cats, setCats] = useState([])
@@ -28,6 +47,7 @@ export default function Dashboard({ session }) {
   const [unlockedIds, setUnlockedIds] = useState([])
   const [healthLogs, setHealthLogs] = useState([])
   const [toast, setToast] = useState(null)
+  const [activeTab, setActiveTab] = useState('home')
 
   const fetchCats = useCallback(async () => {
     try {
@@ -96,6 +116,17 @@ export default function Dashboard({ session }) {
   }
 
   const handleSelectCat = (cat) => { if (cat.id !== selectedCat?.id) setSelectedCat(cat) }
+
+  const handleDeleteCat = async (cat) => {
+    if (!window.confirm(`Delete ${cat.name}? This will delete all their predictions and data.`)) return
+    try {
+      const { error } = await supabase.from('cats').delete().eq('id', cat.id)
+      if (error) throw error
+      setCats(prev => prev.filter(c => c.id !== cat.id))
+      if (selectedCat?.id === cat.id) setSelectedCat(null)
+    } catch (err) { console.error('Delete cat failed:', err.message) }
+  }
+
   const handlePrediction = (result) => { setLatestResult(result); setPredictions(prev => [result, ...prev]); setSelectedCat(prev => ({ ...prev, total_xp: result.newTotalXP })); setCats(prev => prev.map(c => c.id === selectedCat.id ? { ...c, total_xp: result.newTotalXP } : c)) }
   const handleConfirm = (id, accurate) => { setPredictions(prev => prev.map(p => p.id === id ? { ...p, confirmed_accurate: accurate } : p)); if (accurate) { const x = (selectedCat.total_xp||0)+25; setSelectedCat(prev => ({...prev, total_xp: x})); setCats(prev => prev.map(c => c.id === selectedCat.id ? {...c, total_xp: x} : c)) }; if (latestResult?.id === id) setLatestResult(prev => ({...prev, confirmed_accurate: accurate})) }
   const handleDeletePrediction = (id) => { setPredictions(prev => prev.filter(p => p.id !== id)); if (latestResult?.id === id) setLatestResult(null) }
@@ -114,7 +145,7 @@ export default function Dashboard({ session }) {
   const feedingReminder = selectedCat ? getFeedingReminder() : null
 
   return (
-    <div className="min-h-screen bg-[#FFFBF0]">
+    <div className="min-h-screen bg-[#1A1A2E] pb-20">
       {/* Toast */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 border-[5px] border-[#1A1A2E] bg-[#FFD700] p-4 max-w-xs rotate-[3deg]"
@@ -148,12 +179,14 @@ export default function Dashboard({ session }) {
         </button>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-10">
-        {/* Cat Management */}
+      {/* Content area */}
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-8 overflow-y-auto">
+
+        {/* Cat selector — always visible on all tabs */}
         <section aria-label="Cat management">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-impact text-3xl text-[#3D3480] uppercase rotate-[-1deg] inline-block"
-              style={{ textShadow: '3px 3px 0 rgba(61,52,128,0.2)' }}>Your Cats</h2>
+            <h2 className="font-impact text-3xl text-[#FFD700] uppercase rotate-[-1deg] inline-block"
+              style={{ textShadow: '3px 3px 0 rgba(255,215,0,0.2)' }}>Your Cats</h2>
             <button onClick={() => { setShowAddForm(!showAddForm); setError(null) }}
               className="font-black text-sm uppercase px-3 py-2 border-2 border-[#1A1A2E] rotate-[3deg] hover:rotate-[0deg] transition-transform"
               style={{ fontFamily: "'Comic Sans MS', cursive", backgroundColor: '#00FF88', boxShadow: '4px 4px 0 #1A1A2E' }}>
@@ -163,19 +196,30 @@ export default function Dashboard({ session }) {
 
           {cats.length > 0 && (
             <div className="flex flex-wrap gap-3 mb-4" role="tablist">
-              {cats.map((cat, i) => (
-                <button key={cat.id} onClick={() => handleSelectCat(cat)} role="tab" aria-selected={selectedCat?.id === cat.id}
-                  style={{ backgroundColor: selectedCat?.id === cat.id ? CAT_COLORS[i % CAT_COLORS.length] : '#FFFBF0', transform: `rotate(${CAT_ROTATIONS[i % CAT_ROTATIONS.length]}deg)`, boxShadow: '4px 4px 0 #1A1A2E' }}
-                  className={`px-4 py-2 border-2 border-[#1A1A2E] font-impact text-sm uppercase hover:scale-110 transition-transform ${selectedCat?.id === cat.id ? 'text-white' : 'text-[#1A1A2E]'}`}>
-                  {cat.name}
-                </button>
-              ))}
+              {cats.map((cat, i) => {
+                const color = CAT_COLORS[i % CAT_COLORS.length]
+                const rotation = CAT_ROTATIONS[i % CAT_ROTATIONS.length]
+                return (
+                  <div key={cat.id} className="relative group">
+                    <button onClick={() => handleSelectCat(cat)} role="tab" aria-selected={selectedCat?.id === cat.id}
+                      style={{ backgroundColor: color.bg, color: color.text, boxShadow: `5px 5px 0 ${color.shadow}`, border: '3px solid #1A1A2E', transform: `rotate(${rotation}deg)` }}
+                      className="px-4 py-2 font-impact text-sm uppercase hover:scale-110 transition-transform">
+                      {cat.name}
+                    </button>
+                    <button onClick={() => handleDeleteCat(cat)}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-[#FF3366] text-white font-black text-xs rounded-full border-2 border-[#1A1A2E] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                      aria-label={`Delete ${cat.name}`}>
+                      ✕
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
           {cats.length === 0 && !showAddForm && (
-            <div className="border-4 border-dashed border-[#3D3480] p-8 text-center rotate-[-1deg]">
-              <p style={{ fontFamily: "'Comic Sans MS', cursive" }} className="text-[#3D3480] text-lg">No cats yet. Add your first cat to start predicting chaos. 🐱</p>
+            <div className="border-4 border-dashed border-[#FFD700] p-8 text-center rotate-[-1deg]">
+              <p style={{ fontFamily: "'Comic Sans MS', cursive" }} className="text-[#FFD700] text-lg">No cats yet. Add your first cat to start predicting chaos. 🐱</p>
             </div>
           )}
 
@@ -210,37 +254,92 @@ export default function Dashboard({ session }) {
               {error && <p className="text-[#FF3366] text-sm font-black border-2 border-[#FF3366] p-2 rotate-[1deg]" role="alert">{error}</p>}
               <button type="submit" disabled={addLoading}
                 className="w-full bg-[#FF3366] text-white font-impact text-xl py-4 border-4 border-[#1A1A2E] uppercase rotate-[1deg] hover:rotate-[0deg] transition-all disabled:opacity-50"
-                style={{ boxShadow: '8px 8px 0 #1A1A2E', animation: addLoading ? 'none' : undefined }}>
+                style={{ boxShadow: '8px 8px 0 #1A1A2E' }}>
                 {addLoading ? 'Adding...' : 'Add Cat'}
               </button>
             </form>
           )}
         </section>
 
+        {/* Tab content — only shows when a cat is selected */}
         {selectedCat && (
-          <section className="space-y-10" aria-label={`${selectedCat.name} details`}>
-            <CatProfileCard cat={selectedCat} predictions={predictions} />
-            {feedingReminder && (
-              <div className="bg-gradient-to-r from-[#FF6B00] to-[#FF3366] border-[5px] border-[#1A1A2E] p-3 font-impact text-sm text-white uppercase tracking-wide"
-                style={{ boxShadow: '8px 8px 0 #1A1A2E', animation: 'shake 0.5s infinite' }} role="alert">
-                {feedingReminder}
-              </div>
-            )}
-            <PredictionForm cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onPrediction={handlePrediction} onAchievementUnlock={handleAchievementUnlock} />
-            {latestResult && <ResultCard result={latestResult} cat={selectedCat} onConfirm={handleConfirm} />}
-            <PredictionHistory predictions={predictions} onDelete={handleDeletePrediction} />
-            <ConspiracyReport cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onAchievementUnlock={handleConspiracyAchievement} />
-            <AchievementGallery unlockedIds={unlockedIds} />
-            <ChaosDNA predictions={predictions} cat={selectedCat} />
-            <HealthLog cat={selectedCat} />
-            <VetReport cat={selectedCat} predictions={predictions} healthLogs={healthLogs} />
-          </section>
+          <>
+            {/* TAB: HOME */}
+            <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
+              <section className="space-y-8">
+                <CatProfileCard cat={selectedCat} predictions={predictions} />
+                {feedingReminder && (
+                  <div className="bg-gradient-to-r from-[#FF6B00] to-[#FF3366] border-[5px] border-[#1A1A2E] p-3 font-impact text-sm text-white uppercase tracking-wide"
+                    style={{ boxShadow: '8px 8px 0 #1A1A2E', animation: 'shake 0.5s infinite' }} role="alert">
+                    {feedingReminder}
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* TAB: PREDICT */}
+            <div style={{ display: activeTab === 'predict' ? 'block' : 'none' }}>
+              <section className="space-y-8">
+                <PredictionForm cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onPrediction={handlePrediction} onAchievementUnlock={handleAchievementUnlock} />
+                {latestResult && <ResultCard result={latestResult} cat={selectedCat} onConfirm={handleConfirm} />}
+                <PredictionHistory predictions={predictions} onDelete={handleDeletePrediction} />
+              </section>
+            </div>
+
+            {/* TAB: INTEL */}
+            <div style={{ display: activeTab === 'intel' ? 'block' : 'none' }}>
+              <section className="space-y-8">
+                <WeatherCorrelation predictions={predictions} />
+                <ChaosTimeMachine predictions={predictions} />
+              </section>
+            </div>
+
+            {/* TAB: IDENTITY */}
+            <div style={{ display: activeTab === 'identity' ? 'block' : 'none' }}>
+              <section className="space-y-8">
+                <CatPersona predictions={predictions} cat={selectedCat} />
+                <ChaosDNA predictions={predictions} cat={selectedCat} />
+              </section>
+            </div>
+
+            {/* TAB: COMMUNITY */}
+            <div style={{ display: activeTab === 'community' ? 'block' : 'none' }}>
+              <section className="space-y-8">
+                <LiveChaosFeed session={session} />
+                <ConspiracyReport cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onAchievementUnlock={handleConspiracyAchievement} />
+                <HealthLog cat={selectedCat} />
+                <VetReport cat={selectedCat} predictions={predictions} healthLogs={healthLogs} />
+                <AchievementGallery unlockedIds={unlockedIds} />
+              </section>
+            </div>
+          </>
         )}
       </main>
 
-      <footer className="bg-[#1A1A2E] px-4 py-4 mt-8 text-center" style={{ borderTop: '5px solid #FFD700' }}>
-        <p className="font-mono text-xs text-[#FFD700]">Purridiction · #HackTheKitty 2026 · World Cat Domination Day 👑</p>
-      </footer>
+      {/* Bottom Tab Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#1A1A2E] flex justify-around py-2"
+        style={{ borderTop: '4px solid #FFD700', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
+        aria-label="Main navigation">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex flex-col items-center gap-1 px-2 py-1 transition-all ${
+              activeTab === tab.id ? 'opacity-100' : 'opacity-50'
+            }`}
+            style={activeTab === tab.id ? { borderTop: '3px solid #FFD700', marginTop: '-4px', paddingTop: '5px' } : {}}
+            aria-label={tab.label}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
+          >
+            <span className="text-2xl">{tab.emoji}</span>
+            <span className={`font-mono text-[9px] uppercase tracking-widest ${
+              activeTab === tab.id ? 'text-[#FFD700] block' : 'text-neutral-500 hidden sm:block'
+            }`}>
+              {tab.label}
+            </span>
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }
