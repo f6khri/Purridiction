@@ -9,6 +9,7 @@ import AchievementGallery from './AchievementGallery'
 import HealthLog from './HealthLog'
 import VetReport from './VetReport'
 import ConspiracyReport from './ConspiracyReport'
+import ChaosDNA from './ChaosDNA'
 
 const CAT_COLORS = ['#FF3366', '#00CFFF', '#FFD700', '#00FF88', '#FF6B00', '#3D3480']
 const CAT_ROTATIONS = [-2, 1.5, -1, 2.5, -1.5, 2]
@@ -230,6 +231,7 @@ export default function Dashboard({ session }) {
             <PredictionHistory predictions={predictions} onDelete={handleDeletePrediction} />
             <ConspiracyReport cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onAchievementUnlock={handleConspiracyAchievement} />
             <AchievementGallery unlockedIds={unlockedIds} />
+            <ChaosDNA predictions={predictions} cat={selectedCat} />
             <HealthLog cat={selectedCat} />
             <VetReport cat={selectedCat} predictions={predictions} healthLogs={healthLogs} />
           </section>
