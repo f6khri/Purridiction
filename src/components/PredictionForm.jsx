@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { callGemini } from '../lib/gemini'
 import { analyzeChaos } from '../lib/chaosEngine'
@@ -13,7 +13,7 @@ function validatePredictionInputs(inputs) {
   if (!["kitten", "adult", "senior"].includes(ageCategory)) throw new Error("Invalid age category")
 }
 
-export default function PredictionForm({ cat, predictions, unlockedIds, onPrediction, onAchievementUnlock }) {
+export default function PredictionForm({ cat, predictions, unlockedIds, onPrediction, onAchievementUnlock, activityData }) {
   const [lastMealHour, setLastMealHour] = useState(new Date().getHours())
   const [playedToday, setPlayedToday] = useState(true)
   const [weather, setWeather] = useState('sunny')
@@ -21,6 +21,16 @@ export default function PredictionForm({ cat, predictions, unlockedIds, onPredic
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [lastSubmitTime, setLastSubmitTime] = useState(null)
+
+  // Auto-fill from activity tracker
+  useEffect(() => {
+    if (activityData?.lastMealHour !== null && activityData?.lastMealHour !== undefined) {
+      setLastMealHour(activityData.lastMealHour)
+    }
+    if (activityData?.playedToday !== undefined) {
+      setPlayedToday(activityData.playedToday)
+    }
+  }, [activityData])
 
   const handlePredict = async (e) => {
     e.preventDefault(); setError(null)
@@ -58,12 +68,22 @@ export default function PredictionForm({ cat, predictions, unlockedIds, onPredic
       </div>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Last Meal: {formatHour(lastMealHour)}</label>
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>
+          Last Meal: {formatHour(lastMealHour)}
+          {activityData?.lastMealHour !== null && activityData?.lastMealHour !== undefined && (
+            <span style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: '#00C896', letterSpacing: '1px', marginLeft: '8px' }}>🟢 AUTO-FILLED</span>
+          )}
+        </label>
         <input type="range" min="0" max="23" value={lastMealHour} onChange={(e) => setLastMealHour(parseInt(e.target.value))} className="w-full" style={{ accentColor: '#FF3366' }} />
       </div>
 
       <div className="relative z-10">
-        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>Played Today?</label>
+        <label className="font-mono text-[10px] uppercase text-[#3D3480] block mb-1" style={{ letterSpacing: '4px' }}>
+          Played Today?
+          {activityData?.playedToday !== undefined && (
+            <span style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: '#00C896', letterSpacing: '1px', marginLeft: '8px' }}>🟢 AUTO-FILLED</span>
+          )}
+        </label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setPlayedToday(true)}
             className="flex-1 py-2 font-impact text-sm uppercase"

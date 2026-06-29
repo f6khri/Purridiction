@@ -15,6 +15,9 @@ import WeatherCorrelation from './WeatherCorrelation'
 import LiveChaosFeed from './LiveChaosFeed'
 import ChaosTimeMachine from './ChaosTimeMachine'
 import ChaosCourt from './ChaosCourt'
+import ChaosHoroscope from './ChaosHoroscope'
+import EmergencyAlert from './EmergencyAlert'
+import ActivityTracker from './ActivityTracker'
 
 const CAT_COLORS = [
   { bg: '#FF3366', text: 'white', shadow: '#FFD700', rotate: '-2deg' },
@@ -48,6 +51,7 @@ export default function Dashboard({ session }) {
   const [healthLogs, setHealthLogs] = useState([])
   const [toast, setToast] = useState(null)
   const [activeTab, setActiveTab] = useState('home')
+  const [activityData, setActivityData] = useState(null)
 
   const fetchCats = useCallback(async () => {
     try {
@@ -312,6 +316,8 @@ export default function Dashboard({ session }) {
             {/* TAB: HOME */}
             <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
               <section className="space-y-8">
+                <EmergencyAlert predictions={predictions} />
+                <ActivityTracker cat={selectedCat} session={session} onActivityUpdate={setActivityData} />
                 <CatProfileCard cat={selectedCat} predictions={predictions} />
                 {feedingReminder && (
                   <div className="bg-gradient-to-r from-[#FF6B00] to-[#FF3366] border-[5px] border-[#1A1A2E] p-3 font-impact text-sm text-white uppercase tracking-wide"
@@ -325,7 +331,7 @@ export default function Dashboard({ session }) {
             {/* TAB: PREDICT */}
             <div style={{ display: activeTab === 'predict' ? 'block' : 'none' }}>
               <section className="space-y-8">
-                <PredictionForm cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onPrediction={handlePrediction} onAchievementUnlock={handleAchievementUnlock} />
+                <PredictionForm cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onPrediction={handlePrediction} onAchievementUnlock={handleAchievementUnlock} activityData={activityData} />
                 {latestResult && <ResultCard result={latestResult} cat={selectedCat} onConfirm={handleConfirm} />}
                 <PredictionHistory predictions={predictions} onDelete={handleDeletePrediction} />
               </section>
@@ -343,6 +349,7 @@ export default function Dashboard({ session }) {
             <div style={{ display: activeTab === 'identity' ? 'block' : 'none' }}>
               <section className="space-y-8">
                 <CatPersona predictions={predictions} cat={selectedCat} />
+                <ChaosHoroscope predictions={predictions} cat={selectedCat} />
                 <ChaosCourt cat={selectedCat} predictions={predictions} onAchievementUnlock={handleAchievementUnlock} />
                 <ChaosDNA predictions={predictions} cat={selectedCat} />
               </section>
