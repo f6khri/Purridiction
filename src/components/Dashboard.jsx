@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { callGemini } from '../lib/gemini'
 import CatProfileCard from './CatProfileCard'
 import PredictionForm from './PredictionForm'
 import ResultCard from './ResultCard'
@@ -18,6 +17,7 @@ import ChaosCourt from './ChaosCourt'
 import ChaosHoroscope from './ChaosHoroscope'
 import EmergencyAlert from './EmergencyAlert'
 import ActivityTracker from './ActivityTracker'
+import ChaosTwin from './ChaosTwin'
 
 const CAT_COLORS = [
   { bg: '#FF3366', text: 'white', shadow: '#FFD700', rotate: '-2deg' },
@@ -44,7 +44,6 @@ export default function Dashboard({ session }) {
   const [newCatAge, setNewCatAge] = useState('adult')
   const [error, setError] = useState(null)
   const [addLoading, setAddLoading] = useState(false)
-  const [generatingName, setGeneratingName] = useState(false)
   const [predictions, setPredictions] = useState([])
   const [latestResult, setLatestResult] = useState(null)
   const [unlockedIds, setUnlockedIds] = useState([])
@@ -92,16 +91,6 @@ export default function Dashboard({ session }) {
     else { setPredictions([]); setUnlockedIds([]); setHealthLogs([]) }
     setLatestResult(null)
   }, [selectedCat?.id, fetchPredictions, fetchAchievements, fetchHealthLogs])
-
-  const handleGenerateName = async () => {
-    setGeneratingName(true)
-    try {
-      const prompt = `Generate a single dramatic cat name for a cat with world domination ambitions.\nAge category: ${newCatAge}\nRules:\n- kitten: cute but ambitious titles like Admiral, Baron, Captain\n- adult: commanding titles like Commander, General, Lord\n- senior: ancient emperor titles like Emperor, Grand Overlord, Ancient Lord\nFormat: [Title] [Name] like Admiral Fluffington or Lord Shadowpaw.\nOne name only. No explanation. No punctuation at the end.`
-      const narration = await callGemini(prompt)
-      const name = narration.trim().slice(0, 30)
-      if (name) setNewCatName(name)
-    } catch { /* silently fail */ } finally { setGeneratingName(false) }
-  }
 
   const handleAddCat = async (e) => {
     e.preventDefault(); setError(null)
@@ -174,17 +163,28 @@ export default function Dashboard({ session }) {
       <header className="sticky top-0 z-40 bg-[#1A1A2E] px-4 py-3 flex items-center justify-between"
         style={{ borderBottom: '5px solid #FFD700' }}>
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="" className="w-10 h-10 rotate-[-5deg] hover:rotate-[5deg] transition-transform duration-300" aria-hidden="true" />
+          <img src="/logo.png" alt="" className="w-10 h-10 hover:rotate-[10deg] transition-transform duration-300" aria-hidden="true"
+            style={{ transform: 'rotate(-10deg)', filter: 'drop-shadow(0 0 6px #FFD700)' }} />
           <h1 className="font-impact text-2xl text-[#FFD700] uppercase"
-            style={{ letterSpacing: '4px', textShadow: '3px 0 #FF3366, -3px 0 #00CFFF', animation: 'glitch 4s infinite' }}>
+            style={{ letterSpacing: '4px', textShadow: '3px 0 #FF3366, -3px 0 #00CFFF, 1px 1px #00FF88', animation: 'glitch 2s infinite' }}>
             Purridiction
           </h1>
         </div>
-        <button onClick={handleLogout}
-          className="font-impact text-sm bg-[#FF3366] text-white border-2 border-white px-3 py-1 uppercase rotate-[2deg] hover:rotate-[-1deg] transition-transform"
-          style={{ boxShadow: '4px 4px 0 #FFD700' }}>
-          Logout
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Global chaos meter */}
+          <div className="hidden sm:flex items-center gap-1">
+            <div className="w-8 h-8 rounded-full border-2 border-[#FF3366] flex items-center justify-center"
+              style={{ animation: 'pulseGlow 2s infinite' }}>
+              <span className="font-mono text-[8px] text-[#FF3366]">78</span>
+            </div>
+            <span className="font-mono text-[7px] text-[#6B7280] uppercase">CHAOS</span>
+          </div>
+          <button onClick={handleLogout}
+            className="font-impact text-sm bg-[#FF3366] text-white border-2 border-white px-3 py-1 uppercase rotate-[2deg] hover:rotate-[-1deg] transition-transform"
+            style={{ boxShadow: '4px 4px 0 #FFD700' }}>
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Content area */}
@@ -272,16 +272,9 @@ export default function Dashboard({ session }) {
               style={{ boxShadow: '12px 12px 0 #FFD700' }}>
               <div>
                 <label htmlFor="cat-name" className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Cat Name</label>
-                <div className="flex gap-2">
-                  <input id="cat-name" type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
-                    placeholder="e.g. Lord Whiskers" required maxLength={30}
-                    className="flex-1 border-2 border-[#1A1A2E] p-2 text-sm font-body bg-white" />
-                  <button type="button" onClick={handleGenerateName} disabled={generatingName}
-                    className="bg-[#00CFFF] text-[#1A1A2E] font-impact text-sm border-2 border-[#1A1A2E] px-3 py-2 rotate-[2deg] hover:rotate-[0deg] transition-transform disabled:opacity-50"
-                    style={{ boxShadow: '3px 3px 0 #3D3480' }}>
-                    {generatingName ? '...' : '✨ Generate'}
-                  </button>
-                </div>
+                <input id="cat-name" type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="e.g. Lord Whiskers" required maxLength={30}
+                  className="w-full border-2 border-[#1A1A2E] p-2 text-sm font-body bg-white" />
               </div>
               <div>
                 <label className="font-mono text-[10px] uppercase tracking-widest text-[#3D3480] block mb-1">Age Category</label>
@@ -314,7 +307,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* TAB: HOME */}
-            <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'home' ? 'block' : 'none', animation: activeTab === 'home' ? 'tabSlam 0.3s ease-out' : 'none' }}>
               <section className="space-y-8">
                 <EmergencyAlert predictions={predictions} />
                 <ActivityTracker cat={selectedCat} session={session} onActivityUpdate={setActivityData} />
@@ -329,7 +322,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* TAB: PREDICT */}
-            <div style={{ display: activeTab === 'predict' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'predict' ? 'block' : 'none', animation: activeTab === 'predict' ? 'tabSlam 0.3s ease-out' : 'none' }}>
               <section className="space-y-8">
                 <PredictionForm cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onPrediction={handlePrediction} onAchievementUnlock={handleAchievementUnlock} activityData={activityData} />
                 {latestResult && <ResultCard result={latestResult} cat={selectedCat} onConfirm={handleConfirm} />}
@@ -338,7 +331,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* TAB: INTEL */}
-            <div style={{ display: activeTab === 'intel' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'intel' ? 'block' : 'none', animation: activeTab === 'intel' ? 'tabSlam 0.3s ease-out' : 'none' }}>
               <section className="space-y-8">
                 <WeatherCorrelation predictions={predictions} />
                 <ChaosTimeMachine predictions={predictions} />
@@ -346,7 +339,7 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* TAB: IDENTITY */}
-            <div style={{ display: activeTab === 'identity' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'identity' ? 'block' : 'none', animation: activeTab === 'identity' ? 'tabSlam 0.3s ease-out' : 'none' }}>
               <section className="space-y-8">
                 <CatPersona predictions={predictions} cat={selectedCat} />
                 <ChaosHoroscope predictions={predictions} cat={selectedCat} />
@@ -356,9 +349,10 @@ export default function Dashboard({ session }) {
             </div>
 
             {/* TAB: COMMUNITY */}
-            <div style={{ display: activeTab === 'community' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'community' ? 'block' : 'none', animation: activeTab === 'community' ? 'tabSlam 0.3s ease-out' : 'none' }}>
               <section className="space-y-8">
                 <LiveChaosFeed session={session} />
+                <ChaosTwin cat={selectedCat} predictions={predictions} session={session} />
                 <ConspiracyReport cat={selectedCat} predictions={predictions} unlockedIds={unlockedIds} onAchievementUnlock={handleConspiracyAchievement} />
                 <HealthLog cat={selectedCat} />
                 <VetReport cat={selectedCat} predictions={predictions} healthLogs={healthLogs} />
@@ -384,7 +378,7 @@ export default function Dashboard({ session }) {
               aria-label={tab.label}
               aria-current={isActive ? 'page' : undefined}
             >
-              <span className="text-2xl" style={isActive ? { animation: 'tabBounce 1s infinite' } : {}}>{tab.emoji}</span>
+              <span className="text-2xl" style={isActive ? { animation: 'tabBounce 1s infinite', filter: 'drop-shadow(0 0 8px #FFD700)' } : {}}>{tab.emoji}</span>
               {isActive && (
                 <span className="font-mono text-[8px] uppercase tracking-widest text-[#1A1A2E] font-black">{tab.label}</span>
               )}

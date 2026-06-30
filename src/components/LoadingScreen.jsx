@@ -25,6 +25,9 @@ export default function LoadingScreen() {
     <div className="min-h-screen bg-[#3D3480] flex flex-col items-center justify-center overflow-hidden relative"
       style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px)', backgroundSize: '100% 6px', animation: 'shimmer 8s linear infinite' }}>
 
+      {/* Alert flash overlay */}
+      <div className="absolute inset-0 pointer-events-none z-50" style={{ animation: 'alertFlash 5s infinite' }} />
+
       {EMOJIS.map((e, i) => (
         <span key={i} className="absolute pointer-events-none"
           style={{ left: `${(i * 5.3) % 100}%`, fontSize: `${30 + (i % 5) * 15}px`, animation: `floatUp ${3 + (i % 8) * 1.2}s linear infinite`, animationDelay: `${i * 0.5}s`, opacity: 0 }}>
